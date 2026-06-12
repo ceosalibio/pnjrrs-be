@@ -13,16 +13,23 @@ return new class extends Migration
     {
         Schema::create('pn_units', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('category_id')->constrained('pn_categories')->onDelete('cascade');
-            $table->string('name');
+            $table->unsignedBigInteger('category_id')->index();
+            $table->string('name')->index();
             $table->string('abreviation')->nullable();
+            $table->string('address')->nullable();
             $table->string('description')->nullable();
             $table->string('icon')->nullable();
-            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
+            // $table->foreign('category_id', 'fk_pn_units_category_id')
+            //     ->references('id')->on('pn_categories')->onDelete('cascade');
+            // $table->foreign('created_by', 'fk_pn_units_created_by')
+            //     ->references('id')->on('users')->onDelete('set null');
+            // $table->foreign('updated_by', 'fk_pn_units_updated_by')
+            //     ->references('id')->on('users')->onDelete('set null');
         });
     }
 

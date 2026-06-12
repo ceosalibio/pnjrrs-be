@@ -13,13 +13,20 @@ return new class extends Migration
     {
         Schema::create('equipment_sub_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('main_item_id')->constrained('equipment_main_items')->onDelete('cascade');
-            $table->string('name');
+            $table->unsignedBigInteger('main_item_id')->index();
+            $table->string('name')->index();
             $table->string('description')->nullable();
-            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
             $table->timestamps();
-            $table->softDeletes();  
+            $table->softDeletes();
+            
+            // $table->foreign('main_item_id', 'fk_equipment_sub_items_main_item_id')
+            //     ->references('id')->on('equipment_main_items')->onDelete('cascade');
+            // $table->foreign('created_by', 'fk_equipment_sub_items_created_by')
+            //     ->references('id')->on('users')->onDelete('set null');
+            // $table->foreign('updated_by', 'fk_equipment_sub_items_updated_by')
+            //     ->references('id')->on('users')->onDelete('set null');
         });
     }
 

@@ -13,12 +13,17 @@ return new class extends Migration
     {
         Schema::create('item_grades', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name')->index();
             $table->string('description')->nullable();
-            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
+            
+            // $table->foreign('created_by', 'fk_item_grades_created_by')
+            //     ->references('id')->on('users')->onDelete('set null');
+            // $table->foreign('updated_by', 'fk_item_grades_updated_by')
+            //     ->references('id')->on('users')->onDelete('set null');
         });
     }
 

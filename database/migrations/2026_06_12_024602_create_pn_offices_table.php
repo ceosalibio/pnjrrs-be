@@ -13,17 +13,29 @@ return new class extends Migration
     {
         Schema::create('pn_offices', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('category_id')->constrained('pn_categories')->onDelete('cascade');
-            $table->foreignId('unit_id')->constrained('pn_units')->onDelete('cascade');
-            $table->foreignId('sub_unit_id')->nullable()->constrained('pn_sub_units')->onDelete('set null');
-            $table->string('name');
+            $table->unsignedBigInteger('category_id')->index();
+            $table->unsignedBigInteger('unit_id')->index();
+            $table->unsignedBigInteger('sub_unit_id')->nullable()->index();
+            $table->string('name')->index();
             $table->string('abreviation')->nullable();
+            $table->string('address')->nullable();
             $table->string('description')->nullable();
             $table->string('icon')->nullable();
-            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
+            
+            // $table->foreign('category_id', 'fk_pn_offices_category_id')
+            //     ->references('id')->on('pn_categories')->onDelete('cascade');
+            // $table->foreign('unit_id', 'fk_pn_offices_unit_id')
+            //     ->references('id')->on('pn_units')->onDelete('cascade');
+            // $table->foreign('sub_unit_id', 'fk_pn_offices_sub_unit_id')
+            //     ->references('id')->on('pn_sub_units')->onDelete('set null');
+            // $table->foreign('created_by', 'fk_pn_offices_created_by')
+            //     ->references('id')->on('users')->onDelete('set null');
+            // $table->foreign('updated_by', 'fk_pn_offices_updated_by')
+            //     ->references('id')->on('users')->onDelete('set null');
         });
     }
 

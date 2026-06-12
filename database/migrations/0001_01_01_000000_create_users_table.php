@@ -13,12 +13,20 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('category_id')->index();
+            $table->unsignedBigInteger('unit_id')->index();
+            $table->unsignedBigInteger('sub_unit_id')->nullable()->index();
+            $table->unsignedBigInteger('office_id')->nullable()->index();
+            $table->unsignedBigInteger('sub_office_id')->nullable()->index();
+            $table->string('rank')->nullable();
             $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+            // $table->string('email')->unique();
+            // $table->timestamp('email_verified_at')->nullable();
+            $table->string('username')->unique()->index();
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

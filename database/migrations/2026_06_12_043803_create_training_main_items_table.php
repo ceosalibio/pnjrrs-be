@@ -17,11 +17,15 @@ return new class extends Migration
             $table->json('activity')->nullable()->comment('JSON field to store related items');
             $table->integer('required')->default(0);
             $table->year('year')->index();
-            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
+            // $table->foreign('created_by', 'fk_training_main_items_created_by')
+            //     ->references('id')->on('users')->onDelete('set null');
+            // $table->foreign('updated_by', 'fk_training_main_items_updated_by')
+            //     ->references('id')->on('users')->onDelete('set null');
         });
     }
 

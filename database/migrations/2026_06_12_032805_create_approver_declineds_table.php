@@ -11,14 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('approver_declineds', function (Blueprint $table) {
+        Schema::create('approver_declined', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('approver_id')->constrained('approvers')->onDelete('cascade')->index();
+            $table->unsignedBigInteger('approver_id')->index();
             $table->string('reason')->nullable();
-            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
+            
+            // $table->foreign('approver_id', 'fk_approver_declineds_approver_id')
+            //     ->references('id')->on('approvers')->onDelete('cascade');
+            // $table->foreign('created_by', 'fk_approver_declineds_created_by')
+            //     ->references('id')->on('users')->onDelete('set null');
+            // $table->foreign('updated_by', 'fk_approver_declineds_updated_by')
+            //     ->references('id')->on('users')->onDelete('set null');
         });
     }
 

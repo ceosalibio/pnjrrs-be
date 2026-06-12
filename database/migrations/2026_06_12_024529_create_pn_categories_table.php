@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('abreviation')->nullable();
             $table->string('description')->nullable();
+            $table->string('address')->nullable();
             $table->string('icon')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();

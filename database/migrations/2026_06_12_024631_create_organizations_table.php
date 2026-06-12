@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('report_trainings', function (Blueprint $table) {
+        Schema::create('organizations', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('category_id')->index();
             $table->unsignedBigInteger('unit_id')->index();
@@ -19,32 +19,33 @@ return new class extends Migration
             $table->unsignedBigInteger('office_id')->nullable()->index();
             $table->unsignedBigInteger('sub_office_id')->nullable()->index();
             $table->json('items')->nullable()->comment('JSON field to store related items');
-            $table->json('activity')->nullable()->comment('JSON field to store related items');
-            $table->json('result')->nullable()->comment('JSON field to store related results');
-            $table->bigInteger('required')->default(0);
-            $table->bigInteger('actual')->default(0);
-            $table->bigInteger('orac')->default(0);
-            $table->string('report_month', 7)->index();
-            $table->integer('status')->default(0)->index()->comment('0: Draft, 1: Submitted, 2: Approved, 3: Rejected');
             $table->unsignedBigInteger('created_by')->nullable();
             $table->unsignedBigInteger('updated_by')->nullable();
             $table->timestamps();
             $table->softDeletes();
-            
-            // $table->foreign('category_id', 'fk_report_trainings_category_id')
+
+            // Foreign key constraints
+            // $table->foreign('category_id', 'fk_organizations_category_id')
             //     ->references('id')->on('pn_categories')->onDelete('cascade');
-            // $table->foreign('unit_id', 'fk_report_trainings_unit_id')
+            // $table->foreign('unit_id', 'fk_organizations_unit_id')
             //     ->references('id')->on('pn_units')->onDelete('cascade');
-            // $table->foreign('sub_unit_id', 'fk_report_trainings_sub_unit_id')
+            // $table->foreign('sub_unit_id', 'fk_organizations_sub_unit_id')
             //     ->references('id')->on('pn_sub_units')->onDelete('set null');
-            // $table->foreign('office_id', 'fk_report_trainings_office_id')
+            // $table->foreign('office_id', 'fk_organizations_office_id')
             //     ->references('id')->on('pn_offices')->onDelete('set null');
-            // $table->foreign('sub_office_id', 'fk_report_trainings_sub_office_id')
+            // $table->foreign('sub_office_id', 'fk_organizations_sub_office_id')
             //     ->references('id')->on('pn_sub_offices')->onDelete('set null');
-            // $table->foreign('created_by', 'fk_report_trainings_created_by')
+            // $table->foreign('created_by', 'fk_organizations_created_by')
             //     ->references('id')->on('users')->onDelete('set null');
-            // $table->foreign('updated_by', 'fk_report_trainings_updated_by')
+            // $table->foreign('updated_by', 'fk_organizations_updated_by')
             //     ->references('id')->on('users')->onDelete('set null');
+
+            // Indexes for foreign keys
+            // $table->index('category_id');
+            // $table->index('unit_id');
+            // $table->index('sub_unit_id');
+            // $table->index('office_id');
+            // $table->index('sub_office_id');
         });
     }
 
@@ -53,6 +54,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('report_trainings');
+        Schema::dropIfExists('organizations');
     }
 };
