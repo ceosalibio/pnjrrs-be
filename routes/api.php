@@ -7,6 +7,7 @@ use App\Http\Controllers\PnSubUnitController;
 use App\Http\Controllers\PnOfficeController;
 use App\Http\Controllers\PnSubOfficeController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ItemAfposController;
 use App\Http\Controllers\AuthController;
 
 Route::get('/ping', fn () => response()->json(['message' => 'pong']));
@@ -38,6 +39,10 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
 
     // User Management
     Route::apiResource('users', UserController::class);
-    Route::get('users/rank/{rank}', [UserController::class, 'getByRank']);
+    Route::get('users/rank/{rankId}', [UserController::class, 'getByRank']);
     Route::get('users/search', [UserController::class, 'search']);
+
+    // Item AFPOS Management
+    Route::apiResource('item-afpos', ItemAfposController::class);
+    Route::get('item-afpos/division/{divisionId}', [ItemAfposController::class, 'getByDivision']);
 });

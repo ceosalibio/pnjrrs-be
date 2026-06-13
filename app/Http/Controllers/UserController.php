@@ -64,7 +64,7 @@ class UserController extends Controller
                 'sub_unit_id' => 'nullable|integer|exists:pn_sub_units,id',
                 'office_id' => 'nullable|integer|exists:pn_offices,id',
                 'sub_office_id' => 'nullable|integer|exists:pn_sub_offices,id',
-                'rank' => 'nullable|string|max:255',
+                'rank_id' => 'nullable|integer|exists:item_ranks,id',
                 'name' => 'required|string|max:255',
                 'username' => 'required|string|max:255|unique:users',
                 'password' => 'required|string|min:8',
@@ -90,7 +90,7 @@ class UserController extends Controller
                 'sub_unit_id' => 'nullable|integer|exists:pn_sub_units,id',
                 'office_id' => 'nullable|integer|exists:pn_offices,id',
                 'sub_office_id' => 'nullable|integer|exists:pn_sub_offices,id',
-                'rank' => 'nullable|string|max:255',
+                'rank_id' => 'nullable|integer|exists:item_ranks,id',
                 'name' => 'sometimes|string|max:255',
                 'username' => 'sometimes|string|max:255|unique:users,username,' . $id,
                 'password' => 'sometimes|string|min:8',
@@ -127,12 +127,12 @@ class UserController extends Controller
      * @param string $rank
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getByRank($rank)
+    public function getByRank($rankId)
     {
         try {
             $perPage = request()->input('per_page', 15);
-            $users = $this->service->getUsersByRank($rank);
-            return $this->successResponse($users, "Users with rank '{$rank}' retrieved successfully");
+            $users = $this->service->getUsersByRank($rankId);
+            return $this->successResponse($users, "Users with rank ID '{$rankId}' retrieved successfully");
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), 500);
         }

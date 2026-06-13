@@ -34,7 +34,15 @@ class AuthController extends Controller
                 'password' => 'required|string',
             ]);
 
-            $user = User::where('username', $validated['username'])->first();
+            $user = User::with([
+                'category',
+                'unit',
+                'subUnit',
+                'office',
+                'subOffice',
+                'rank'
+            ])
+            ->where('username', $validated['username'])->first();
 
             if (!$user || !Hash::check($validated['password'], $user->password)) {
                 // Log failed login attempt
@@ -53,12 +61,7 @@ class AuthController extends Controller
 
             return $this->successResponse(
                 [
-                    'user' => [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'username' => $user->username,
-                        'rank' => $user->rank,
-                    ],
+                    'user' => $user,
                     'token' => $token,
                 ],
                 'Login successful',
@@ -66,15 +69,15 @@ class AuthController extends Controller
             );
         } catch (ValidationException $e) {
             return $this->errorResponse(
-                $e->errors(),
                 'Validation failed',
-                422
+                422,
+                $e->errors()
             );
         } catch (\Exception $e) {
             return $this->errorResponse(
-                ['error' => $e->getMessage()],
                 'Login failed',
-                500
+                500,
+                ['error' => $e->getMessage()]
             );
         }
     }
@@ -92,9 +95,9 @@ class AuthController extends Controller
 
             if (!$user) {
                 return $this->errorResponse(
-                    ['error' => 'User not authenticated'],
-                    'Logout failed',
-                    401
+                    'User not authenticated',
+                    401,
+                    ['error' => 'User not authenticated']
                 );
             }
 
@@ -111,9 +114,9 @@ class AuthController extends Controller
             );
         } catch (\Exception $e) {
             return $this->errorResponse(
-                ['error' => $e->getMessage()],
                 'Logout failed',
-                500
+                500,
+                ['error' => $e->getMessage()]
             );
         }
     }
@@ -131,9 +134,9 @@ class AuthController extends Controller
 
             if (!$user) {
                 return $this->errorResponse(
-                    ['error' => 'User not authenticated'],
                     'Not authenticated',
-                    401
+                    401,
+                    ['error' => 'User not authenticated']
                 );
             }
 
@@ -147,9 +150,9 @@ class AuthController extends Controller
             );
         } catch (\Exception $e) {
             return $this->errorResponse(
-                ['error' => $e->getMessage()],
                 'Failed to retrieve user',
-                500
+                500,
+                ['error' => $e->getMessage()]
             );
         }
     }

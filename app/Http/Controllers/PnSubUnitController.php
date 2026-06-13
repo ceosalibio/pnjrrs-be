@@ -54,6 +54,8 @@ class PnSubUnitController extends Controller
                 'abreviation' => 'nullable|string|max:50',
                 'description' => 'nullable|string',
                 'icon' => 'nullable|string',
+                'address' => 'nullable|string',
+
             ]);
 
             $subUnit = $this->service->createSubUnit($validated);
@@ -75,6 +77,8 @@ class PnSubUnitController extends Controller
                 'abreviation' => 'nullable|string|max:50',
                 'description' => 'nullable|string',
                 'icon' => 'nullable|string',
+                'address' => 'nullable|string',
+
             ]);
 
             $updated = $this->service->updateSubUnit($id, $validated);

@@ -24,7 +24,7 @@ class User extends Authenticatable
         'sub_unit_id',
         'office_id',
         'sub_office_id',
-        'rank',
+        'rank_id',
         'name',
         'username',
         'password',
@@ -76,5 +76,10 @@ class User extends Authenticatable
     public function subOffice()
     {
         return $this->belongsTo(PnSubOffice::class, 'sub_office_id');
+    }
+
+    public function rank()
+    {
+        return $this->belongsTo(ItemRank::class, 'rank_id');
     }
 }

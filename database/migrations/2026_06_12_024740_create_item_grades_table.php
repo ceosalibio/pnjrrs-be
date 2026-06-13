@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('item_grades', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('division_id')->index();
             $table->string('name')->index();
             $table->string('description')->nullable();
             $table->unsignedBigInteger('created_by')->nullable();

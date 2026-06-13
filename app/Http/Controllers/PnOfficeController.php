@@ -55,6 +55,8 @@ class PnOfficeController extends Controller
                 'abreviation' => 'nullable|string|max:50',
                 'description' => 'nullable|string',
                 'icon' => 'nullable|string',
+                'address' => 'nullable|string',
+
             ]);
 
             $office = $this->service->createOffice($validated);
@@ -77,6 +79,8 @@ class PnOfficeController extends Controller
                 'abreviation' => 'nullable|string|max:50',
                 'description' => 'nullable|string',
                 'icon' => 'nullable|string',
+                'address' => 'nullable|string',
+
             ]);
 
             $updated = $this->service->updateOffice($id, $validated);

@@ -53,6 +53,8 @@ class PnUnitController extends Controller
                 'abreviation' => 'nullable|string|max:50',
                 'description' => 'nullable|string',
                 'icon' => 'nullable|string',
+                'address' => 'nullable|string',
+
             ]);
 
             $unit = $this->service->createUnit($validated);
@@ -73,6 +75,7 @@ class PnUnitController extends Controller
                 'abreviation' => 'nullable|string|max:50',
                 'description' => 'nullable|string',
                 'icon' => 'nullable|string',
+                'address' => 'nullable|string'
             ]);
 
             $updated = $this->service->updateUnit($id, $validated);

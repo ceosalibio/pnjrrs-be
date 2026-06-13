@@ -56,6 +56,8 @@ class PnSubOfficeController extends Controller
                 'abreviation' => 'nullable|string|max:50',
                 'description' => 'nullable|string',
                 'icon' => 'nullable|string',
+                'address' => 'nullable|string',
+
             ]);
 
             $subOffice = $this->service->createSubOffice($validated);
@@ -79,6 +81,8 @@ class PnSubOfficeController extends Controller
                 'abreviation' => 'nullable|string|max:50',
                 'description' => 'nullable|string',
                 'icon' => 'nullable|string',
+                'address' => 'nullable|string',
+
             ]);
 
             $updated = $this->service->updateSubOffice($id, $validated);

@@ -52,9 +52,9 @@ class UserService
         return $this->repository->findBySubOffice($subOfficeId);
     }
 
-    public function getUsersByRank(string $rank): Collection
+    public function getUsersByRank(int $rankId): Collection
     {
-        return $this->repository->findByRank($rank);
+        return $this->repository->findByRank($rankId);
     }
 
     public function createUser(array $data)

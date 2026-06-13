@@ -14,7 +14,8 @@ class UserRepository
             'unit',
             'subUnit',
             'office',
-            'subOffice'
+            'subOffice',
+            'rank'
         ])->get();
     }
 
@@ -25,7 +26,8 @@ class UserRepository
             'unit',
             'subUnit',
             'office',
-            'subOffice'
+            'subOffice',
+            'rank'
         ])->find($id);
     }
 
@@ -36,7 +38,9 @@ class UserRepository
             'unit',
             'subUnit',
             'office',
-            'subOffice'
+            'subOffice',
+            'rank'
+
         ])->where('username', $username)->first();
     }
 
@@ -47,7 +51,8 @@ class UserRepository
             'unit',
             'subUnit',
             'office',
-            'subOffice'
+            'subOffice',    
+            'rank'
         ])->where('category_id', $categoryId)->get();
     }
 
@@ -58,29 +63,32 @@ class UserRepository
             'unit',
             'subUnit',
             'office',
-            'subOffice'
+            'subOffice',
+            'rank'
         ])->where('unit_id', $unitId)->get();
     }
 
     public function findBySubUnit(int $subUnitId): Collection
     {
         return User::with([
-            'category',
+           'category',
             'unit',
             'subUnit',
             'office',
-            'subOffice'
+            'subOffice',    
+            'rank'
         ])->where('sub_unit_id', $subUnitId)->get();
     }
 
     public function findByOffice(int $officeId): Collection
     {
         return User::with([
-            'category',
+           'category',
             'unit',
             'subUnit',
             'office',
-            'subOffice'
+            'subOffice',    
+            'rank'
         ])->where('office_id', $officeId)->get();
     }
 
@@ -91,19 +99,21 @@ class UserRepository
             'unit',
             'subUnit',
             'office',
-            'subOffice'
+            'subOffice',    
+            'rank'
         ])->where('sub_office_id', $subOfficeId)->get();
     }
 
-    public function findByRank(string $rank): Collection
+    public function findByRank(int $rankId): Collection
     {
         return User::with([
             'category',
             'unit',
             'subUnit',
             'office',
-            'subOffice'
-        ])->where('rank', $rank)->get();
+            'subOffice',
+            'rank'
+        ])->where('rank_id', $rankId)->get();
     }
 
     public function create(array $data): User
@@ -136,7 +146,8 @@ class UserRepository
             'unit',
             'subUnit',
             'office',
-            'subOffice'
+            'subOffice',    
+            'rank'
         ])->paginate($perPage);
     }
 
@@ -147,62 +158,68 @@ class UserRepository
             'unit',
             'subUnit',
             'office',
-            'subOffice'
+            'subOffice',    
+            'rank'
         ])->where('category_id', $categoryId)->paginate($perPage);
     }
 
     public function filterByUnit(int $unitId, int $perPage = 15)
     {
         return User::with([
-            'category',
+           'category',
             'unit',
             'subUnit',
             'office',
-            'subOffice'
+            'subOffice',    
+            'rank'
         ])->where('unit_id', $unitId)->paginate($perPage);
     }
 
     public function filterBySubUnit(int $subUnitId, int $perPage = 15)
     {
         return User::with([
-            'category',
+           'category',
             'unit',
             'subUnit',
             'office',
-            'subOffice'
+            'subOffice',    
+            'rank'
         ])->where('sub_unit_id', $subUnitId)->paginate($perPage);
     }
 
     public function filterByOffice(int $officeId, int $perPage = 15)
     {
         return User::with([
-            'category',
+           'category',
             'unit',
             'subUnit',
             'office',
-            'subOffice'
+            'subOffice',    
+            'rank'
         ])->where('office_id', $officeId)->paginate($perPage);
     }
 
     public function filterBySubOffice(int $subOfficeId, int $perPage = 15)
     {
         return User::with([
-            'category',
+           'category',
             'unit',
             'subUnit',
             'office',
-            'subOffice'
+            'subOffice',    
+            'rank'
         ])->where('sub_office_id', $subOfficeId)->paginate($perPage);
     }
 
     public function search(string $query, int $perPage = 15)
     {
         return User::with([
-            'category',
+           'category',
             'unit',
             'subUnit',
             'office',
-            'subOffice'
+            'subOffice',    
+            'rank'
         ])->where('name', 'like', "%{$query}%")
             ->orWhere('username', 'like', "%{$query}%")
             ->paginate($perPage);

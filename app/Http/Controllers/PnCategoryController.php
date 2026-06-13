@@ -46,6 +46,7 @@ class PnCategoryController extends Controller
                 'abreviation' => 'nullable|string|max:50',
                 'description' => 'nullable|string',
                 'icon' => 'nullable|string',
+                'address' => 'nullable|string',
             ]);
 
             $category = $this->service->createCategory($validated);
@@ -65,6 +66,8 @@ class PnCategoryController extends Controller
                 'abreviation' => 'nullable|string|max:50',
                 'description' => 'nullable|string',
                 'icon' => 'nullable|string',
+                'address' => 'nullable|string',
+
             ]);
 
             $updated = $this->service->updateCategory($id, $validated);
