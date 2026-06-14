@@ -157,4 +157,14 @@ class UserController extends Controller
             return $this->errorResponse($e->getMessage(), 500);
         }
     }
+
+    public function getRank()
+    {
+        try {
+            $ranks = $this->service->getAllRanks();
+            return $this->successResponse($ranks, 'Ranks retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), 500);
+        }
+    }
 }

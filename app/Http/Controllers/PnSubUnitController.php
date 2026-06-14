@@ -17,12 +17,20 @@ class PnSubUnitController extends Controller
     public function index(Request $request)
     {
         try {
-            $perPage = $request->input('per_page', 15);
-            
             if ($request->has('unit_id')) {
-                $subUnits = $this->service->getPaginatedSubUnitsByUnit($request->unit_id, $perPage);
+                if ($request->has('per_page')) {
+                    $perPage = $request->input('per_page');
+                    $subUnits = $this->service->getPaginatedSubUnitsByUnit($request->unit_id, $perPage);
+                } else {
+                    $subUnits = $this->service->getSubUnitsByUnit($request->unit_id);
+                }
             } else {
-                $subUnits = $this->service->getPaginatedSubUnits($perPage);
+                if ($request->has('per_page')) {
+                    $perPage = $request->input('per_page');
+                    $subUnits = $this->service->getPaginatedSubUnits($perPage);
+                } else {
+                    $subUnits = $this->service->getAllSubUnits();
+                }
             }
             
             return $this->successResponse($subUnits, 'Sub-units retrieved successfully');
@@ -48,7 +56,7 @@ class PnSubUnitController extends Controller
     {
         try {
             $validated = $request->validate([
-                'category_id' => 'required|integer|exists:pn_categories,id',
+                'category_id' => 'nullable|integer|exists:pn_categories,id',
                 'unit_id' => 'required|integer|exists:pn_units,id',
                 'name' => 'required|string|max:255',
                 'abreviation' => 'nullable|string|max:50',

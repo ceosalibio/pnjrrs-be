@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\User;
+use App\Models\ItemRank;
 use Illuminate\Database\Eloquent\Collection;
 
 class UserRepository
@@ -223,5 +224,10 @@ class UserRepository
         ])->where('name', 'like', "%{$query}%")
             ->orWhere('username', 'like', "%{$query}%")
             ->paginate($perPage);
+    }
+
+    public function getAllRanks() : Collection
+    {
+        return ItemRank::with(['division','grade'])->get();
     }
 }

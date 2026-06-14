@@ -114,4 +114,9 @@ class UserService
     {
         return $this->repository->search($query, $perPage);
     }
+
+    public function getAllRanks()
+    {
+        return $this->repository->getAllRanks();
+    }
 }

@@ -17,12 +17,20 @@ class PnSubOfficeController extends Controller
     public function index(Request $request)
     {
         try {
-            $perPage = $request->input('per_page', 15);
-            
             if ($request->has('office_id')) {
-                $subOffices = $this->service->getPaginatedSubOfficesByOffice($request->office_id, $perPage);
+                if ($request->has('per_page')) {
+                    $perPage = $request->input('per_page');
+                    $subOffices = $this->service->getPaginatedSubOfficesByOffice($request->office_id, $perPage);
+                } else {
+                    $subOffices = $this->service->getSubOfficesByOffice($request->office_id);
+                }
             } else {
-                $subOffices = $this->service->getPaginatedSubOffices($perPage);
+                if ($request->has('per_page')) {
+                    $perPage = $request->input('per_page');
+                    $subOffices = $this->service->getPaginatedSubOffices($perPage);
+                } else {
+                    $subOffices = $this->service->getAllSubOffices();
+                }
             }
             
             return $this->successResponse($subOffices, 'Sub-offices retrieved successfully');
@@ -48,8 +56,8 @@ class PnSubOfficeController extends Controller
     {
         try {
             $validated = $request->validate([
-                'category_id' => 'required|integer|exists:pn_categories,id',
-                'unit_id' => 'required|integer|exists:pn_units,id',
+                'category_id' => 'nullable|integer|exists:pn_categories,id',
+                'unit_id' => 'nullable|integer|exists:pn_units,id',
                 'sub_unit_id' => 'nullable|integer|exists:pn_sub_units,id',
                 'office_id' => 'nullable|integer|exists:pn_offices,id',
                 'name' => 'required|string|max:255',

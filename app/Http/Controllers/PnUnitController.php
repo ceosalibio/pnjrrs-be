@@ -17,12 +17,20 @@ class PnUnitController extends Controller
     public function index(Request $request)
     {
         try {
-            $perPage = $request->input('per_page', 15);
-            
             if ($request->has('category_id')) {
-                $units = $this->service->getPaginatedUnitsByCategory($request->category_id, $perPage);
+                if ($request->has('per_page')) {
+                    $perPage = $request->input('per_page');
+                    $units = $this->service->getPaginatedUnitsByCategory($request->category_id, $perPage);
+                } else {
+                    $units = $this->service->getUnitsByCategory($request->category_id);
+                }
             } else {
-                $units = $this->service->getPaginatedUnits($perPage);
+                if ($request->has('per_page')) {
+                    $perPage = $request->input('per_page');
+                    $units = $this->service->getPaginatedUnits($perPage);
+                } else {
+                    $units = $this->service->getAllUnits();
+                }
             }
             
             return $this->successResponse($units, 'Units retrieved successfully');

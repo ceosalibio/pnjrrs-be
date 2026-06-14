@@ -17,8 +17,12 @@ class PnCategoryController extends Controller
     public function index(Request $request)
     {
         try {
-            $perPage = $request->input('per_page', 15);
-            $categories = $this->service->getPaginatedCategories($perPage);
+            if ($request->has('per_page')) {
+                $perPage = $request->input('per_page');
+                $categories = $this->service->getPaginatedCategories($perPage);
+            } else {
+                $categories = $this->service->getAllCategories();
+            }
             return $this->successResponse($categories, 'Categories retrieved successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), 500);

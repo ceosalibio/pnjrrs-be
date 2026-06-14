@@ -38,9 +38,11 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
     Route::apiResource('sub-offices', PnSubOfficeController::class);
 
     // User Management
-    Route::apiResource('users', UserController::class);
+    Route::get('users/get-rank', [UserController::class, 'getRank']);
     Route::get('users/rank/{rankId}', [UserController::class, 'getByRank']);
     Route::get('users/search', [UserController::class, 'search']);
+    Route::apiResource('users', UserController::class);
+   
 
     // Item AFPOS Management
     Route::apiResource('item-afpos', ItemAfposController::class);

@@ -3,12 +3,17 @@
 namespace App\Services;
 
 use App\Repositories\PnSubUnitRepository;
+use App\Repositories\PnUnitRepository;
 use Illuminate\Database\Eloquent\Collection;
 
 class PnSubUnitService
 {
-    public function __construct(private PnSubUnitRepository $repository)
+    private PnUnitRepository $unitRepository;
+    private PnSubUnitRepository $repository;
+    public function __construct(PnUnitRepository $unitRepository, PnSubUnitRepository $repository)
     {
+        $this->unitRepository = $unitRepository;
+        $this->repository = $repository;
     }
 
     public function getAllSubUnits(): Collection
@@ -33,14 +38,31 @@ class PnSubUnitService
 
     public function createSubUnit(array $data)
     {
+       if (!isset($data["category_id"])) {
+            if (!isset($data["unit_id"])) {
+                throw new \Exception("Unit ID is required when category ID is not provided");
+            }
+            $unit = $this->unitRepository->findById($data["unit_id"]);
+            if (!$unit) {
+                throw new \Exception("Unit not found");
+            }
+            $data["category_id"] = $unit->category_id;
+        }
         return $this->repository->create($data);
     }
 
     public function updateSubUnit(int $id, array $data): bool
     {
+        if (isset($data["unit_id"]) && !isset($data["category_id"])) {
+            $unit = $this->unitRepository->findById($data["unit_id"]);
+            if (!$unit) {
+                throw new \Exception("Unit not found");
+            }
+            $data["category_id"] = $unit->category_id;
+        }
         return $this->repository->update($id, $data);
     }
-
+    
     public function deleteSubUnit(int $id): bool
     {
         return $this->repository->delete($id);
