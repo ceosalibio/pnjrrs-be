@@ -9,6 +9,10 @@ use App\Http\Controllers\PnSubOfficeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ItemAfposController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\SettingPersonnelController;
+use App\Http\Controllers\SettingOrganizationController;
+
+
 
 Route::get('/ping', fn () => response()->json(['message' => 'pong']));
 Route::get('/hello', function () {
@@ -47,4 +51,10 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
     // Item AFPOS Management
     Route::apiResource('item-afpos', ItemAfposController::class);
     Route::get('item-afpos/division/{divisionId}', [ItemAfposController::class, 'getByDivision']);
+
+    // route for settings
+    Route::prefix('settings')->group(function () {
+        Route::apiResource('organizations',SettingOrganizationController::class);
+        Route::apiResource('personnels',SettingPersonnelController::class);
+    });
 });

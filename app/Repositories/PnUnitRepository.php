@@ -54,4 +54,10 @@ class PnUnitRepository
     {
         return PnUnit::with(['category'])->where('category_id', $categoryId)->paginate($perPage);
     }
+
+    public function getCategoryByUnitId(int $unitId)
+    {
+        return $this->findById($unitId)?->category;
+    }
+
 }
