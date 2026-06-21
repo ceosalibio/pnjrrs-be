@@ -31,6 +31,10 @@ class SettingOrganizationController extends Controller
                 $filters['office_id'] = $request->input('office_id');
             }
 
+            if ($request->has('sub_office_id')) {
+                $filters['sub_office_id'] = $request->input('sub_office_id');
+            }
+
             // If filters exist, use filtered query; otherwise get paginated list
             if (!empty($filters)) {
                 $organizations = $this->service->getOrganizationsByFilters($filters, $perPage);
@@ -79,7 +83,13 @@ class SettingOrganizationController extends Controller
             ]);
 
             $organization = $this->service->createOrganization($validated);
-            return $this->successResponse($organization, 'Organization created successfully', 201);
+            
+            // Handle both single organization and array of organizations
+            $message = is_array($organization) && count($organization) > 1 
+                ? count($organization) . ' organizations created successfully (one per office)' 
+                : 'Organization created successfully';
+            
+            return $this->successResponse($organization, $message, 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->errorResponse($e->errors(), 422);
         } catch (\Exception $e) {

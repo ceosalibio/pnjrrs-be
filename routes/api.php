@@ -11,6 +11,8 @@ use App\Http\Controllers\ItemAfposController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SettingPersonnelController;
 use App\Http\Controllers\SettingOrganizationController;
+use App\Http\Controllers\ReportPersonnelController;
+
 
 
 
@@ -52,9 +54,14 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
     Route::apiResource('item-afpos', ItemAfposController::class);
     Route::get('item-afpos/division/{divisionId}', [ItemAfposController::class, 'getByDivision']);
 
+    // route for reports
+    Route::prefix('report')->group(function () {
+        Route::get('personnels/grouped-by-office', [ReportPersonnelController::class, 'getItemsGroupedByOffice']);
+        Route::apiResource('personnels', ReportPersonnelController::class);
+    });
     // route for settings
     Route::prefix('settings')->group(function () {
-        Route::apiResource('organizations',SettingOrganizationController::class);
-        Route::apiResource('personnels',SettingPersonnelController::class);
+        Route::apiResource('organizations', SettingOrganizationController::class);
+        Route::apiResource('personnels', SettingPersonnelController::class);
     });
 });

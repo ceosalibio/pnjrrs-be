@@ -74,7 +74,36 @@ class SettingOrganizationRepository
         if (isset($filters['office_id'])) {
             $query->where('office_id', $filters['office_id']);
         }
+        if (isset($filters['sub_office_id'])) {
+            $query->where('sub_office_id', $filters['sub_office_id']);
+        }
 
-        return $query->paginate($perPage);
+        $result = $query->paginate($perPage);
+
+        // Fallback: if office_id filter returns no results, try sub_unit_id
+        if ($result->isEmpty() && isset($filters['office_id'])) {
+            $fallbackQuery = Organization::query();
+            if (isset($filters['unit_id'])) {
+                $fallbackQuery->where('unit_id', $filters['unit_id']);
+            }
+            if (isset($filters['sub_unit_id'])) {
+                $fallbackQuery->where('sub_unit_id', $filters['sub_unit_id']);
+            }
+            $result = $fallbackQuery->paginate($perPage);
+        }
+
+        // Fallback: if sub_office_id filter returns no results, try office_id
+        if ($result->isEmpty() && isset($filters['sub_office_id'])) {
+            $fallbackQuery = Organization::query();
+            if (isset($filters['unit_id'])) {
+                $fallbackQuery->where('unit_id', $filters['unit_id']);
+            }
+            if (isset($filters['office_id'])) {
+                $fallbackQuery->where('office_id', $filters['office_id']);
+            }
+            $result = $fallbackQuery->paginate($perPage);
+        }
+
+        return $result;
     }
 }

@@ -61,25 +61,88 @@ class SettingOrganizationService
             $data['items'] = $this->processItems($data['items'], $data);
         }
 
-        // Extract office_id and sub_office_id from first item if they exist
+        // Group items by office_id and create separate organizations for each office
         if (isset($data['items']) && is_array($data['items']) && count($data['items']) > 0) {
-            foreach ($data['items'] as $item) {
-                if (isset($item['office_id']) && !isset($data['office_id'])) {
-                    $data['office_id'] = $item['office_id'];
-                }
-                if (isset($item['sub_office_id']) && !isset($data['sub_office_id'])) {
-                    $data['sub_office_id'] = $item['sub_office_id'];
-                }
-                // Break if we found both
-                if (isset($data['office_id']) && isset($data['sub_office_id'])) {
-                    break;
-                }
-            }
+            $organizations = $this->createOrganizationsByOffice($data);
+            return $organizations;
         }
 
         $data['created_by'] = auth()->user()?->id;
         return $this->repository->create($data);
 
+    }
+
+    /**
+     * Create separate organizations for each unique office in the items
+     */
+    private function createOrganizationsByOffice(array $baseData): array
+    {
+        $itemsByOffice = []; // Group items by office_id
+        $createdOrganizations = [];
+
+        // Group items by office_id
+        foreach ($baseData['items'] as $item) {
+            $officeId = $item['office_id'] ?? null;
+            $subOfficeId = $item['sub_office_id'] ?? null;
+            
+            if ($officeId !== null) {
+                $key = $officeId . '_' . ($subOfficeId ?? 'null');
+                
+                if (!isset($itemsByOffice[$key])) {
+                    $itemsByOffice[$key] = [
+                        'office_id' => $officeId,
+                        'sub_office_id' => $subOfficeId,
+                        'items' => []
+                    ];
+                }
+                
+                $itemsByOffice[$key]['items'][] = $item;
+            }
+        }
+
+        // Create a separate organization for each unique office
+        foreach ($itemsByOffice as $officeGroup) {
+            $orgData = $baseData;
+            $orgData['office_id'] = $officeGroup['office_id'];
+            $orgData['sub_office_id'] = $officeGroup['sub_office_id'];
+            $orgData['items'] = $officeGroup['items'];
+            $orgData['created_by'] = auth()->user()?->id;
+
+            $createdOrganization = $this->repository->create($orgData);
+            $createdOrganizations[] = $createdOrganization;
+        }
+
+        return $createdOrganizations;
+    }
+
+    /**
+     * Filter items for update: only keep items matching the organization's office_id and sub_office_id
+     * Does NOT create new offices/sub-offices during update
+     */
+    private function filterAndPrepareItemsForUpdate(array $items, ?int $officeId, ?int $subOfficeId): array
+    {
+        if ($officeId === null) {
+            return $items;
+        }
+
+        $filteredItems = [];
+        
+        foreach ($items as $item) {
+            // If sub_office_id exists, match both office_id and sub_office_id
+            if ($subOfficeId !== null) {
+                if (isset($item['office_id']) && $item['office_id'] == $officeId &&
+                    isset($item['sub_office_id']) && $item['sub_office_id'] == $subOfficeId) {
+                    $filteredItems[] = $item;
+                }
+            } else {
+                // If only office_id exists, match office_id only
+                if (isset($item['office_id']) && $item['office_id'] == $officeId) {
+                    $filteredItems[] = $item;
+                }
+            }
+        }
+
+        return !empty($filteredItems) ? $filteredItems : $items;
     }
 
     /**
@@ -245,26 +308,22 @@ class SettingOrganizationService
             return null;
         }
 
-        // Get existing organization data to preserve office_id and sub_office_id
-        $existingData = [
-            'office_id' => $organization->office_id,
-            'sub_office_id' => $organization->sub_office_id,
-            'category_id' => $organization->category_id,
-            'unit_id' => $data['unit_id'] ?? $organization->unit_id,
-            'sub_unit_id' => $data['sub_unit_id'] ?? $organization->sub_unit_id,
-        ];
-
         if (isset($data['unit_id'])) {
             $category = $this->unitRepository->getCategoryByUnitId($data['unit_id']);
             if ($category) {
                 $data['category_id'] = $category->id;
-                $existingData['category_id'] = $category->id;
             }
         }
 
-        // Only process items if they're being updated
+        // For updates: just replace items without creating new offices
+        // Items are stored as-is without office/office creation logic
+        // Only filter items to match the existing organization's office_id and sub_office_id
         if (isset($data['items']) && is_array($data['items'])) {
-            $data['items'] = $this->processItems($data['items'], $existingData);
+            $data['items'] = $this->filterAndPrepareItemsForUpdate(
+                $data['items'],
+                $organization->office_id,
+                $organization->sub_office_id
+            );
         }
 
         $data['updated_by'] = auth()->user()?->id;
