@@ -4,18 +4,22 @@ namespace App\Services;
 
 use App\Repositories\ReportPersonnelRepository;
 use App\Services\SettingOrganizationService;
+use App\Services\ResultCalculationService;
 
 class ReportPersonnelService
 {
     private $repository;
     private $organizationService;
+    private $resultCalculationService;
 
     public function __construct(
         ReportPersonnelRepository $repository,
-        SettingOrganizationService $organizationService
+        SettingOrganizationService $organizationService,
+        ResultCalculationService $resultCalculationService
     ) {
         $this->repository = $repository;
         $this->organizationService = $organizationService;
+        $this->resultCalculationService = $resultCalculationService;
     }
 
     public function getAllReports()
@@ -86,7 +90,17 @@ class ReportPersonnelService
                 // Calculate aggregate values from items if present
                 if ($organization->items) {
                     $items = is_array($organization->items) ? $organization->items : json_decode($organization->items, true);
-                    $data['required'] = count($items);
+                    
+                    // Sum the 'required' field if it exists and is numeric, otherwise count items
+                    $data['required'] = 0;
+                    if (is_array($items)) {
+                        foreach ($items as $item) {
+                            if (isset($item['required']) && isset($item['grade']) && is_numeric($item['required']) ) {
+                                $data['required'] += $item['required'];
+                            }
+                        }
+                    }
+                    
                     $data['actual'] = 0;
                     $data['grade_points'] = 0;
                     $data['afpos_points'] = 0;
@@ -113,6 +127,20 @@ class ReportPersonnelService
         }
 
         $data['updated_by'] = auth()->user()?->id;
+        
+        // Calculate result ratings using current or updated values
+        $gradePoints = $data['grade_points'] ?? $report->grade_points ?? 0;
+        $afposPoints = $data['afpos_points'] ?? $report->afpos_points ?? 0;
+        $actual = $data['actual'] ?? $report->actual ?? 0;
+        $required = $data['required'] ?? $report->required ?? 0;
+        
+        $data['result'] = $this->resultCalculationService->calculatePersonnelResults(
+            $gradePoints,
+            $afposPoints,
+            $actual,
+            $required
+        );
+        
         return $this->repository->update($id, $data);
     }
 

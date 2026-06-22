@@ -17,16 +17,23 @@ class ItemAfposController extends Controller
     public function index(Request $request)
     {
         try {
-            $perPage = $request->input('per_page', 15);
             $search = $request->input('search');
 
             if ($search) {
                 $items = $this->service->searchItems($search);
                 return $this->successResponse($items, 'Item AFPOS search results retrieved successfully');
             } elseif ($request->has('division_id')) {
-                $items = $this->service->getPaginatedItemsByDivision($request->division_id, $perPage);
+                if ($request->has('per_page')) {
+                    $items = $this->service->getPaginatedItemsByDivision($request->division_id, $request->input('per_page'));
+                } else {
+                    $items = $this->service->getItemsByDivision($request->division_id);
+                }
             } else {
-                $items = $this->service->getPaginatedItems($perPage);
+                if ($request->has('per_page')) {
+                    $items = $this->service->getPaginatedItems($request->input('per_page'));
+                } else {
+                    $items = $this->service->getAllItems();
+                }
             }
 
             return $this->successResponse($items, 'Item AFPOS retrieved successfully');
