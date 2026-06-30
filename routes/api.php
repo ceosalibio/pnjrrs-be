@@ -6,6 +6,7 @@ use App\Http\Controllers\PnUnitController;
 use App\Http\Controllers\PnSubUnitController;
 use App\Http\Controllers\PnOfficeController;
 use App\Http\Controllers\PnSubOfficeController;
+use App\Http\Controllers\PnSerialController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ItemAfposController;
 use App\Http\Controllers\AuthController;
@@ -42,6 +43,11 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
     Route::apiResource('offices', PnOfficeController::class);
     // Sub-offices - Filter by office_id query parameter
     Route::apiResource('sub-offices', PnSubOfficeController::class);
+
+    // PN Serials Management
+    Route::apiResource('pn-serials', PnSerialController::class);
+    Route::get('pn-serials/report-month/{reportMonth}', [PnSerialController::class, 'getByReportMonth']);
+    Route::get('pn-serials/personnel-report/{personnelReportId}', [PnSerialController::class, 'getByPersonnelReport']);
 
     // User Management
     Route::get('users/get-rank', [UserController::class, 'getRank']);

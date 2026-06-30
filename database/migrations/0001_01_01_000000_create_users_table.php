@@ -24,6 +24,9 @@ return new class extends Migration
             // $table->timestamp('email_verified_at')->nullable();
             $table->string('username')->unique()->index();
             $table->string('password');
+            $table->unsignedInteger('role')->nullable()->index(); // admin 1 approver 2
+            $table->unsignedInteger('approver')->nullable()->index(); 
+            $table->unsignedInteger('office')->nullable()->index(); // 1 - N1 
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();
