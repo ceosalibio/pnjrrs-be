@@ -103,20 +103,21 @@ class ReportPersonnelController extends Controller
                 'office_id' => 'nullable|integer|exists:pn_offices,id',
                 'sub_office_id' => 'nullable|integer|exists:pn_sub_offices,id',
                 'items' => 'nullable|array',
+                'assessment' => 'nullable|array',
                 // 'items.*.description' => 'nullable|string',
                 // 'items.*.grade' => 'nullable|string',
                 // 'items.*.afpos' => 'nullable|string',
                 // 'items.*.required' => 'nullable|string',
                 // 'items.*.office' => 'nullable|boolean',
                 // 'items.*.officeName' => 'nullable|string',
-                'grade_points' => 'nullable|integer',
-                'afpos_points' => 'nullable|integer',
-                'required' => 'nullable|integer',
-                'actual' => 'nullable|integer',
+                'grade_points' => 'nullable|numeric',
+                'afpos_points' => 'nullable|numeric',
+                'required' => 'nullable|numeric',
+                'actual' => 'nullable|numeric',
                 'report_month' => 'sometimes|string',
                 'status' => 'nullable|integer|in:0,1,2,3',
             ]);
-
+         
             $report = $this->service->updateReport($id, $validated);
             if (!$report) {
                 return $this->errorResponse('Report not found', 404);

@@ -50,4 +50,29 @@ class PnSerialService
     {
         return $this->repository->findByPersonnelReportId($personnelReportId);
     }
+
+    public function isSerialExistingInReportMonthButDifferentPersonnelReport(string $reportMonth, int $personnelReportId): bool
+    {
+        $serials = $this->repository->findByReportMonth($reportMonth);
+        
+        foreach ($serials as $serial) {
+            if ($serial->personnel_report_id !== $personnelReportId) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    public function isSerialNumberExistsInMonth(string $serialNumber, string $reportMonth, ?int $excludePersonnelReportId = null): bool
+    {
+        $query = \App\Models\PnSerial::where('serial', $serialNumber)
+            ->where('report_month', $reportMonth);
+        
+        if ($excludePersonnelReportId !== null) {
+            $query->where('personnel_report_id', '!=', $excludePersonnelReportId);
+        }
+        
+        return $query->exists();
+    }
 }

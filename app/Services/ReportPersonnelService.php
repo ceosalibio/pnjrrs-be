@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Repositories\ReportPersonnelRepository;
 use App\Services\SettingOrganizationService;
 use App\Services\ResultCalculationService;
+use App\Services\PnSerialService;
 
 class ReportPersonnelService
 {
@@ -15,11 +16,13 @@ class ReportPersonnelService
     public function __construct(
         ReportPersonnelRepository $repository,
         SettingOrganizationService $organizationService,
-        ResultCalculationService $resultCalculationService
+        ResultCalculationService $resultCalculationService,
+        PnSerialService $pnSerialService
     ) {
         $this->repository = $repository;
         $this->organizationService = $organizationService;
         $this->resultCalculationService = $resultCalculationService;
+        $this->pnSerialService = $pnSerialService;
     }
 
     public function getAllReports()
@@ -39,8 +42,18 @@ class ReportPersonnelService
 
     public function createReport(array $data)
     {
+        // Validate serial numbers in items are unique within the report month
+        if (isset($data['items']) && is_array($data['items']) && isset($data['report_month'])) {
+            $this->validateSerialNumbersUniqueness($data['items'], $data['report_month']);
+        }
+
         $data['created_by'] = auth()->user()?->id;
-        return $this->repository->create($data);
+        $result = $this->repository->create($data);
+        
+        // Create serial record after report creation
+        $this->createSerialForReport($result);
+        
+        return $result;
     }
 
     public function createReportWithFallback(array $data)
@@ -126,6 +139,12 @@ class ReportPersonnelService
             return null;
         }
 
+        // Validate serial numbers in items are unique within the report month
+        if (isset($data['items']) && is_array($data['items'])) {
+            $reportMonth = $data['report_month'] ?? $report->report_month;
+            $this->validateSerialNumbersUniqueness($data['items'], $reportMonth, $id);
+        }
+
         $data['updated_by'] = auth()->user()?->id;
         
         // Calculate result ratings using current or updated values
@@ -140,8 +159,14 @@ class ReportPersonnelService
             $actual,
             $required
         );
+  
+        $this->repository->update($id, $data);
         
-        return $this->repository->update($id, $data);
+        // Refresh and create/update serial record after report update
+        $updatedReport = $this->repository->findById($id);
+        $this->createSerialForReport($updatedReport);
+        
+        return $updatedReport;
     }
 
     public function deleteReport(int $id): bool
@@ -173,4 +198,75 @@ class ReportPersonnelService
     {
         return $this->repository->filterBySubOfficeId($subOfficeId, $perPage);
     }
+
+    /**
+     * Validate that all serial numbers in items are unique within the same report month.
+     * 
+     * @param array $items The items array containing serial numbers
+     * @param string $reportMonth The report month to check against
+     * @param int|null $excludePersonnelReportId The personnel report ID to exclude (for updates)
+     * @throws \Exception If a serial number already exists in the same month
+     */
+    private function validateSerialNumbersUniqueness(array $items, string $reportMonth, ?int $excludePersonnelReportId = null)
+    {
+        foreach ($items as $item) {
+            // Check if item has a 'serial' field
+            if (isset($item['serial']) && !empty($item['serial'])) {
+                $serialNumber = $item['serial'];
+                
+                // Check if this serial number already exists in the same month (excluding current report if updating)
+                if ($this->pnSerialService->isSerialNumberExistsInMonth($serialNumber, $reportMonth, $excludePersonnelReportId)) {
+                    throw new \Exception('The serial number already exists for the selected month.');
+                }
+            }
+        }
+    }
+
+    /**
+     * Create serial records for a report based on items in the report.
+     * 
+     * @param object $report The ReportPersonnel instance
+     */
+    private function createSerialForReport($report)
+    {
+        if (!$report || !$report->items) {
+            return;
+        }
+
+        $items = is_array($report->items) ? $report->items : json_decode($report->items, true);
+        
+        if (!is_array($items)) {
+            return;
+        }
+
+        // Create a serial record for each item in the report
+        foreach ($items as $item) {
+            if (isset($item['serial']) && !empty($item['serial'])) {
+                $serialData = [
+                    'personnel_report_id' => $report->id,
+                    'category_id' => $report->category_id,
+                    'unit_id' => $report->unit_id,
+                    'sub_unit_id' => $report->sub_unit_id ?? null,
+                    'office_id' => $report->office_id ?? null,
+                    'sub_office_id' => $report->sub_office_id ?? null,
+                    'rank_id' => $item['rank_id'] ?? null,
+                    'serial' => $item['serial'],
+                    'name' => $item['name'] ?? null,
+                    'report_month' => $report->report_month,
+                ];
+
+                // Check if serial already exists and update or create
+                $existingSerial = \App\Models\PnSerial::where('personnel_report_id', $report->id)
+                    ->where('serial', $item['serial'])
+                    ->first();
+
+                if ($existingSerial) {
+                    $existingSerial->update($serialData);
+                } else {
+                    $this->pnSerialService->createSerial($serialData);
+                }
+            }
+        }
+    }
 }
+

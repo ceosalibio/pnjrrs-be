@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
             ItemDivisionSeeder::class,
             ItemRankSeeder::class,
             ItemGradeSeeder::class,
-            HPNSeeder::class,
+            UserSeeder::class,
         ]);
 
         // User::factory(10)->create();

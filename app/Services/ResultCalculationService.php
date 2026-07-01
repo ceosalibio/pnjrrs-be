@@ -21,25 +21,21 @@ class ResultCalculationService
         }
 
         // Calculate ratings based on provided formula
-        $psgRating = ($actualCount / $requiredCount) * 100;
+        $fillUpRating = ($actualCount / $requiredCount) * 100;
+        $finalFillUpRating = $fillUpRating * 0.8;
         $gradeRating = ($gradePoints / $actualCount) * 100;
-        $gradeRating04 = $gradeRating * 0.4;
+        $finalGradeRating = $gradeRating * 0.2;
         $afposRating = ($afposPoints / $actualCount) * 100;
-        $afposRating06 = $afposRating * 0.6;
-        $psgRating05 = $psgRating * 0.5;
-        $pqrRatingTotal = $gradeRating04 + $afposRating06;
-        $pqrRating05 = $pqrRatingTotal * 0.5;
-        $readiness = $psgRating05 + $pqrRating05;
+        $finalAfposRating = $afposRating * 0.2;
+        $readiness = $finalFillUpRating + $finalGradeRating  + $finalAfposRating;
 
         return [
-            'psgRating' => $this->round($psgRating),
+            'fillUpRating' => $this->round($fillUpRating),
+            'finalFillUpRating' => $this->round($finalFillUpRating),
             'gradeRating' => $this->round($gradeRating),
-            'gradeRating04' => $this->round($gradeRating04),
+            'finalGradeRating' => $this->round($finalGradeRating),
             'afposRating' => $this->round($afposRating),
-            'afposRating06' => $this->round($afposRating06),
-            'psgRating05' => $this->round($psgRating05),
-            'pqrRatingTotal' => $this->round($pqrRatingTotal),
-            'pqrRating05' => $this->round($pqrRating05),
+            'finalAfposRating' => $this->round($finalAfposRating),
             'readiness' => $this->round($readiness)
         ];
     }

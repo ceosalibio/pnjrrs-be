@@ -18,6 +18,7 @@ class ReportPersonnel extends Model
         'sub_office_id',
         'items',
         'result',
+        'assessment',
         'grade_points',
         'afpos_points',
         'required',
@@ -31,7 +32,9 @@ class ReportPersonnel extends Model
     protected function casts(): array
     {
         return [
+            'assessment' => 'array',
             'items' => 'array',
+            'result' => 'array',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',

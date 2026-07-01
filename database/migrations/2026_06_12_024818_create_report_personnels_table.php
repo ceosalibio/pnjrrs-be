@@ -20,10 +20,11 @@ return new class extends Migration
             $table->unsignedBigInteger('sub_office_id')->nullable()->index();
             $table->json('items')->nullable()->comment('JSON field to store related items');
             $table->json('result')->nullable()->comment('JSON field to store related results');
-            $table->bigInteger('grade_points')->default(0);
-            $table->bigInteger('afpos_points')->default(0);
-            $table->bigInteger('required')->default(0);
-            $table->bigInteger('actual')->default(0);
+            $table->json('assessment')->nullable()->comment('JSON field to store related results');
+            $table->decimal('grade_points', 10, 2)->default(0);
+            $table->decimal('afpos_points', 10, 2)->default(0);
+            $table->decimal('required', 10, 2)->default(0);
+            $table->decimal('actual', 10, 2)->default(0);
             $table->string('report_month', 7)->index();
             $table->integer('status')->default(0)->index()->comment('0: Draft, 1: Submitted, 2: Approved, 3: Rejected');
             $table->unsignedBigInteger('created_by')->nullable();
