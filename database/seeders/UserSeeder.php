@@ -25,7 +25,7 @@ class UserSeeder extends Seeder
                 'name' => 'Admin User',
                 'username' => 'admin',
                 'role' => 1,
-                'office' => 3,
+                'office_role' => 3,
                 'password' => Hash::make('password'),
                 'created_at' => now(),
                 'updated_at' => now(),

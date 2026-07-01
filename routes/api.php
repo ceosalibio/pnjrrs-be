@@ -13,6 +13,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SettingPersonnelController;
 use App\Http\Controllers\SettingOrganizationController;
 use App\Http\Controllers\ReportPersonnelController;
+use App\Http\Controllers\TrainingItemController;
 
 
 
@@ -70,4 +71,9 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
         Route::apiResource('organizations', SettingOrganizationController::class);
         Route::apiResource('personnels', SettingPersonnelController::class);
     });
+
+    // Training Items Management
+    Route::apiResource('training-items', TrainingItemController::class);
+    Route::get('training-items/unit/{unitId}', [TrainingItemController::class, 'getByUnit']);
+    Route::get('training-items/year/{year}', [TrainingItemController::class, 'getByYear']);
 });

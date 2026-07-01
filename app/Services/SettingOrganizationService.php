@@ -159,6 +159,7 @@ class SettingOrganizationService
             // Handle afpos - create if not exists
             if (!empty($item['afpos'])) {
                 $item['item_afpos_id'] = $this->getOrCreateAfpos($item['afpos'], $item['grade'], $afposMap);
+                $item['item_afpos_group'] = $this->itemAfposRepository->getAfposGroup($item['afpos']);
             }
 
             // If this is an office header (office: true), create a PnOffice and PnSubOffice
@@ -242,6 +243,7 @@ class SettingOrganizationService
         return $grade?->division_id;
     }
 
+    
     /**
      * Create a PnOffice from item data
      */

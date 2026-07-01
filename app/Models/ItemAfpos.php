@@ -41,6 +41,11 @@ class ItemAfpos extends Model
         return $this->belongsTo(ItemDivision::class, 'division_id');
     }
 
+    public function cluster()
+    {
+        return $this->belongsTo(ItemAfposCluster::class, 'name','name');
+    }
+
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');

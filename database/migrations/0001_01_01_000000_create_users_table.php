@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('password');
             $table->unsignedInteger('role')->nullable()->index(); // admin 1 approver 2
             $table->unsignedInteger('approver')->nullable()->index(); 
-            $table->unsignedInteger('office')->nullable()->index(); // 1 - N1 
+            $table->unsignedInteger('office_role')->nullable()->index(); // 1 - N1 
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();

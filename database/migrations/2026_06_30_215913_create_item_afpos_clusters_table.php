@@ -13,7 +13,11 @@ return new class extends Migration
     {
         Schema::create('item_afpos_clusters', function (Blueprint $table) {
             $table->id();
+            $table->integer('group')->index();
+            $table->string('name')->index();
+            $table->string('description')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

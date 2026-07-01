@@ -6,5 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class ItemAfposCluster extends Model
 {
-    //
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
+    protected $fillable = [
+        'group',
+        'name',
+        'description',
+    ];
 }

@@ -2,16 +2,12 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class User extends Authenticatable
+class TrainingItem extends Model
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens;
+    use SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -24,35 +20,22 @@ class User extends Authenticatable
         'sub_unit_id',
         'office_id',
         'sub_office_id',
-        'rank_id',
-        'name',
-        'username',
-        'password',
-        'role',
-        'approver',
-        'office_role'
+        'items',
+        'year',
+        'created_by',
+        'updated_by',
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
      * @return array<string, string>
      */
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'items' => 'json',
+            'year' => 'integer',
         ];
     }
 
@@ -79,10 +62,5 @@ class User extends Authenticatable
     public function subOffice()
     {
         return $this->belongsTo(PnSubOffice::class, 'sub_office_id');
-    }
-
-    public function rank()
-    {
-        return $this->belongsTo(ItemRank::class, 'rank_id');
     }
 }
