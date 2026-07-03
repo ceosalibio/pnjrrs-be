@@ -20,6 +20,7 @@ return new class extends Migration
             $table->unsignedBigInteger('sub_office_id')->nullable()->index();
             $table->unsignedBigInteger('rank_id')->nullable()->index();
             $table->string('name');
+            $table->string('position')->nullable();
             // $table->string('email')->unique();
             // $table->timestamp('email_verified_at')->nullable();
             $table->string('username')->unique()->index();

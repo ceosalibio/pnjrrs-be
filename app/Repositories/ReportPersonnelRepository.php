@@ -82,6 +82,9 @@ class ReportPersonnelRepository
         if (isset($filters['sub_office_id'])) {
             $query->where('sub_office_id', $filters['sub_office_id']);
         }
+        if (isset($filters['report_month'])) {
+            $query->where('report_month', $filters['report_month']);
+        }
 
         $result = $query->paginate($perPage);
 

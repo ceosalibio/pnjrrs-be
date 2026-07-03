@@ -65,8 +65,8 @@ class ReportPersonnelController extends Controller
                 'report_month' => 'required|string',
             ]);
 
-            $report = $this->service->createReportWithFallback($validated);
-            return $this->successResponse($report, 'Report created successfully', 201);
+            $result = $this->service->createReportWithFallback($validated);
+            return $this->successResponse($result, 'Report created successfully', 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->errorResponse($e->errors(), 422);
         } catch (\Exception $e) {

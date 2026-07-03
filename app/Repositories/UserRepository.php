@@ -16,7 +16,8 @@ class UserRepository
             'subUnit',
             'office',
             'subOffice',
-            'rank'
+            'rank',
+            'approvers'
         ])->get();
     }
 
@@ -28,7 +29,8 @@ class UserRepository
             'subUnit',
             'office',
             'subOffice',
-            'rank'
+            'rank',
+            'approvers'
         ])->find($id);
     }
 
@@ -148,7 +150,8 @@ class UserRepository
             'subUnit',
             'office',
             'subOffice',    
-            'rank'
+            'rank',
+            'approvers'
         ])->paginate($perPage);
     }
 
@@ -229,5 +232,50 @@ class UserRepository
     public function getAllRanks() : Collection
     {
         return ItemRank::with(['division','grade'])->get();
+    }
+
+
+    public function filterByMultiple(array $filters)
+    {
+        $query = User::with([
+            'category',
+            'unit',
+            'subUnit',
+            'office',
+            'subOffice',
+            'rank',
+            'approvers',
+            'approvers.user',
+        ]);
+
+        if (isset($filters['category_id'])) {
+            $query->where('category_id', $filters['category_id']);
+        }
+
+        if (isset($filters['unit_id'])) {
+            $query->where('unit_id', $filters['unit_id']);
+        }
+
+        if (isset($filters['sub_unit_id'])) {
+            $query->where('sub_unit_id', $filters['sub_unit_id']);
+        }
+
+        if (isset($filters['office_id'])) {
+            $query->where('office_id', $filters['office_id']);
+        }
+
+        if (isset($filters['sub_office_id'])) {
+            $query->where('sub_office_id', $filters['sub_office_id']);
+        }
+
+        // Filter by approver - only if both report_id and report_type are provided
+        if (isset($filters['report_id']) && isset($filters['report_type'])) {
+            $query->whereHas('approvers', function ($q) use ($filters) {
+                $q->where('report_id', $filters['report_id'])
+                    ->where('report_type', $filters['report_type']);
+            });
+        }
+
+        return $query->get();
     }
 }

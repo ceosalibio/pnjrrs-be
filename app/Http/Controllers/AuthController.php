@@ -156,4 +156,74 @@ class AuthController extends Controller
             );
         }
     }
+
+    /**
+     * Change user password
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function changePassword(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            if (!$user) {
+                return $this->errorResponse(
+                    'Not authenticated',
+                    401,
+                    ['error' => 'User not authenticated']
+                );
+            }
+
+            $validated = $request->validate([
+                'current_password' => 'required|string',
+                'new_password' => 'required|string|min:8|confirmed',
+            ]);
+
+            // Check if current password is correct
+            if (!Hash::check($validated['current_password'], $user->password)) {
+                return $this->errorResponse(
+                    'Validation failed',
+                    422,
+                    ['current_password' => ['The current password is incorrect.']]
+                );
+            }
+
+            // Check if new password is different from current password
+            if (Hash::check($validated['new_password'], $user->password)) {
+                return $this->errorResponse(
+                    'Validation failed',
+                    422,
+                    ['new_password' => ['The new password must be different from the current password.']]
+                );
+            }
+
+            // Update password
+            $user->update([
+                'password' => Hash::make($validated['new_password']),
+            ]);
+
+            // Log password change
+            $this->loggingService->logPasswordChange($user->username, true, 'Password changed successfully');
+
+            return $this->successResponse(
+                [],
+                'Password changed successfully',
+                200
+            );
+        } catch (ValidationException $e) {
+            return $this->errorResponse(
+                'Validation failed',
+                422,
+                $e->errors()
+            );
+        } catch (\Exception $e) {
+            return $this->errorResponse(
+                'Password change failed',
+                500,
+                ['error' => $e->getMessage()]
+            );
+        }
+    }
 }

@@ -6,23 +6,27 @@ use App\Repositories\ReportPersonnelRepository;
 use App\Services\SettingOrganizationService;
 use App\Services\ResultCalculationService;
 use App\Services\PnSerialService;
+use App\Services\ApproverService;
 
 class ReportPersonnelService
 {
     private $repository;
     private $organizationService;
     private $resultCalculationService;
+    private $approverService;
 
     public function __construct(
         ReportPersonnelRepository $repository,
         SettingOrganizationService $organizationService,
         ResultCalculationService $resultCalculationService,
-        PnSerialService $pnSerialService
+        PnSerialService $pnSerialService,
+        ApproverService $approverService
     ) {
         $this->repository = $repository;
         $this->organizationService = $organizationService;
         $this->resultCalculationService = $resultCalculationService;
         $this->pnSerialService = $pnSerialService;
+        $this->approverService = $approverService;
     }
 
     public function getAllReports()
@@ -53,80 +57,127 @@ class ReportPersonnelService
         // Create serial record after report creation
         $this->createSerialForReport($result);
         
-        return $result;
+        // Fetch approver for the report
+        $approver = $this->approverService->getApproverForReport($result,'personnel');
+        
+        return [
+            'report' => $result,
+            'approver' => $approver,
+        ];
     }
 
     public function createReportWithFallback(array $data)
     {
-        // Build filters WITHOUT report_month to get any existing report for this unit/office
-        $filtersWithoutMonth = [
+        // Build unit filters (without month) for searching organizational units
+        $unitFilters = [
             'unit_id' => $data['unit_id'],
         ];
         if (isset($data['sub_unit_id'])) {
-            $filtersWithoutMonth['sub_unit_id'] = $data['sub_unit_id'];
+            $unitFilters['sub_unit_id'] = $data['sub_unit_id'];
         }
         if (isset($data['office_id'])) {
-            $filtersWithoutMonth['office_id'] = $data['office_id'];
+            $unitFilters['office_id'] = $data['office_id'];
         }
         if (isset($data['sub_office_id'])) {
-            $filtersWithoutMonth['sub_office_id'] = $data['sub_office_id'];
+            $unitFilters['sub_office_id'] = $data['sub_office_id'];
         }
 
-        // Check if ANY report exists for these filters (regardless of month)
-        $existingReport = $this->getReportsByFilters($filtersWithoutMonth, 1);
+        // Keep requested month in original MM/YYYY format (don't normalize)
+        $requestMonth = $data['report_month'] ?? null;
 
-        if ($existingReport && $existingReport->count() > 0) {
-            $lastReport = $existingReport->first();
+        // STEP 1: Check if a report for the CURRENT/REQUESTED month already exists
+        if ($requestMonth) {
+            $currentMonthFilters = array_merge($unitFilters, ['report_month' => $requestMonth]);
+            $currentMonthReports = $this->getReportsByFilters($currentMonthFilters, 1);
             
-            // If same report_month exists, don't create - return existing
-            if (isset($data['report_month']) && $lastReport->report_month === $data['report_month']) {
-                return $lastReport;
+            if ($currentMonthReports && $currentMonthReports->count() > 0) {
+                $currentReport = $currentMonthReports->first();
+                $approver = $this->approverService->getApproverForReport($currentReport);
+                return [
+                    'report' => $currentReport,
+                    'approver' => $approver,
+                ];
             }
-            
-            // Different report_month - copy previous report data and create new
-            $data['category_id'] = $lastReport->category_id;
-            $data['items'] = $lastReport->items;
-            $data['result'] = $lastReport->result;
-            $data['grade_points'] = $lastReport->grade_points;
-            $data['afpos_points'] = $lastReport->afpos_points;
-            $data['required'] = $lastReport->required;
-            $data['actual'] = $lastReport->actual;
-        } else {
-            // No existing report - get organization data and create new
-            $organizationData = $this->organizationService->getOrganizationsByFilters($filtersWithoutMonth, 1);
+        }
 
-            if ($organizationData && $organizationData->count() > 0) {
-                // Extract items from organization (JSON) and aggregate values
-                $organization = $organizationData->first();
-                $data['items'] = $organization->items;
-                $data['category_id'] = $organization->category_id; // Set category_id to null or default value
-                // Calculate aggregate values from items if present
-                if ($organization->items) {
-                    $items = is_array($organization->items) ? $organization->items : json_decode($organization->items, true);
+        // STEP 2: Search for previous month report to copy data from
+        if ($requestMonth) {
+            $previousMonth = $this->getPreviousMonth($requestMonth);
+            
+            \Log::info('Report Fallback Debug', [
+                'requestMonth' => $requestMonth,
+                'previousMonth' => $previousMonth,
+            ]);
+            
+            if ($previousMonth) {
+                $previousMonthFilters = array_merge($unitFilters, ['report_month' => $previousMonth]);
+                
+                \Log::info('Searching for previous month', [
+                    'previousMonth' => $previousMonth,
+                    'filters' => $previousMonthFilters,
+                ]);
+                
+                $previousMonthReports = $this->getReportsByFilters($previousMonthFilters, 1);
+                
+                \Log::info('Previous month search result', [
+                    'found' => $previousMonthReports ? $previousMonthReports->count() : 0,
+                ]);
+                
+                if ($previousMonthReports && $previousMonthReports->count() > 0) {
+                    $previousReport = $previousMonthReports->first();
                     
-                    // Sum the 'required' field if it exists and is numeric, otherwise count items
-                    $data['required'] = 0;
-                    if (is_array($items)) {
-                        foreach ($items as $item) {
-                            if (isset($item['required']) && isset($item['grade']) && is_numeric($item['required']) ) {
-                                $data['required'] += $item['required'];
-                            }
+                    \Log::info('Copying data from previous month', [
+                        'from_month' => $previousReport->report_month,
+                        'to_month' => $requestMonth,
+                    ]);
+                    
+                    // Copy previous month's report data to create new month
+                    $data['category_id'] = $previousReport->category_id;
+                    $data['items'] = $previousReport->items;
+                    $data['result'] = $previousReport->result;
+                    $data['grade_points'] = $previousReport->grade_points;
+                    $data['afpos_points'] = $previousReport->afpos_points;
+                    $data['required'] = $previousReport->required;
+                    $data['actual'] = $previousReport->actual;
+                    return $this->createReport($data);
+                }
+            }
+        }
+
+        // STEP 3: No existing reports found, use organization data if available
+        $organizationData = $this->organizationService->getOrganizationsByFilters($unitFilters, 1);
+
+        if ($organizationData && $organizationData->count() > 0) {
+            $organization = $organizationData->first();
+            $data['items'] = $organization->items;
+            $data['category_id'] = $organization->category_id;
+            
+            // Calculate aggregate values from items if present
+            if ($organization->items) {
+                $items = is_array($organization->items) ? $organization->items : json_decode($organization->items, true);
+                
+                // Sum the 'required' field if it exists and is numeric
+                $data['required'] = 0;
+                if (is_array($items)) {
+                    foreach ($items as $item) {
+                        if (isset($item['required']) && isset($item['grade']) && is_numeric($item['required'])) {
+                            $data['required'] += $item['required'];
                         }
                     }
-                    
-                    $data['actual'] = 0;
-                    $data['grade_points'] = 0;
-                    $data['afpos_points'] = 0;
                 }
-            } else {
-                // No existing data found, create empty report
-                $data['items'] = null;
-                $data['result'] = null;
+                
+                $data['actual'] = 0;
                 $data['grade_points'] = 0;
                 $data['afpos_points'] = 0;
-                $data['required'] = 0;
-                $data['actual'] = 0;
             }
+        } else {
+            // No existing data found, create empty report
+            $data['items'] = null;
+            $data['result'] = null;
+            $data['grade_points'] = 0;
+            $data['afpos_points'] = 0;
+            $data['required'] = 0;
+            $data['actual'] = 0;
         }
 
         return $this->createReport($data);
@@ -267,6 +318,67 @@ class ReportPersonnelService
                 }
             }
         }
+    }
+
+    /**
+     * Normalize month format to YYYY-MM for consistent comparison.
+     * Accepts MM/YYYY or YYYY-MM formats.
+     * 
+     * @param string $month The month in MM/YYYY or YYYY-MM format
+     * @return string The normalized month in YYYY-MM format
+     */
+    private function normalizeMonthFormat($month)
+    {
+        if (empty($month)) {
+            return null;
+        }
+
+        // If already in YYYY-MM format, return as is
+        if (preg_match('/^\d{4}-\d{2}$/', $month)) {
+            return $month;
+        }
+
+        // Convert MM/YYYY to YYYY-MM
+        if (preg_match('/^(\d{2})\/(\d{4})$/', $month, $matches)) {
+            return $matches[2] . '-' . $matches[1];
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the previous month in MM/YYYY format.
+     * For example: "06/2026" returns "05/2026", "01/2026" returns "12/2025"
+     * 
+     * @param string $month The current month in MM/YYYY format
+     * @return string|null The previous month in MM/YYYY format, or null if invalid
+     */
+    private function getPreviousMonth($month)
+    {
+        if (empty($month)) {
+            return null;
+        }
+
+        // Parse MM/YYYY format
+        if (!preg_match('/^(\d{2})\/(\d{4})$/', $month, $matches)) {
+            return null;
+        }
+
+        $currentMonth = (int) $matches[1];
+        $currentYear = (int) $matches[2];
+
+        // Decrement month
+        $previousMonth = $currentMonth - 1;
+        $previousYear = $currentYear;
+
+        // Handle year boundary (January -> December of previous year)
+        if ($previousMonth < 1) {
+            $previousMonth = 12;
+            $previousYear -= 1;
+        }
+
+        // Return in MM/YYYY format with zero-padding
+        return str_pad($previousMonth, 2, '0', STR_PAD_LEFT) . '/' . $previousYear;
     }
 }
 

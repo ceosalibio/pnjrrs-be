@@ -66,8 +66,12 @@ class UserController extends Controller
                 'sub_office_id' => 'nullable|integer|exists:pn_sub_offices,id',
                 'rank_id' => 'nullable|integer|exists:item_ranks,id',
                 'name' => 'required|string|max:255',
+                'position' => 'required|string|max:255',
                 'username' => 'required|string|max:255|unique:users',
                 'password' => 'required|string|min:8',
+                'role' => 'nullable | integer',
+                'approver' => 'nullable | integer',
+                'office_role' => 'nullable | integer',
             ]);
 
             $user = $this->service->createUser($validated);
@@ -92,8 +96,12 @@ class UserController extends Controller
                 'sub_office_id' => 'nullable|integer|exists:pn_sub_offices,id',
                 'rank_id' => 'nullable|integer|exists:item_ranks,id',
                 'name' => 'sometimes|string|max:255',
+                'position' => 'required|string|max:255',
                 'username' => 'sometimes|string|max:255|unique:users,username,' . $id,
                 'password' => 'sometimes|string|min:8',
+                'role' => 'nullable | integer',
+                'approver' => 'nullable | integer',
+                'office_role' => 'nullable | integer',
             ]);
 
             $updated = $this->service->updateUser($id, $validated);

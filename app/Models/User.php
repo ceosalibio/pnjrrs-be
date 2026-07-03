@@ -7,11 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasFactory, Notifiable, HasApiTokens, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -26,6 +27,7 @@ class User extends Authenticatable
         'sub_office_id',
         'rank_id',
         'name',
+        'position',
         'username',
         'password',
         'role',
@@ -39,7 +41,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $hidden = [
-        'password',
+        // 'password',
         'remember_token',
     ];
 
@@ -84,5 +86,21 @@ class User extends Authenticatable
     public function rank()
     {
         return $this->belongsTo(ItemRank::class, 'rank_id');
+    }
+
+    public function approvers()
+    {
+        return $this->hasMany(Approver::class, 'user_id');
+    }
+
+    /**
+     * Get approvers for a specific report type
+     * 
+     * @param string $reportType The report type (e.g., 'Personnel', 'Equipment', 'Facility', 'Training')
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function approversForReportType($reportType)
+    {
+        return $this->approvers()->where('report_type', $reportType);
     }
 }
