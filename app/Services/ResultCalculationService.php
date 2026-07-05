@@ -70,4 +70,22 @@ class ResultCalculationService
     {
         return round($value, 2);
     }
+
+    public function calculateTrainingResults(int $actual, int $required): array
+    {
+        // Prevent division by zero
+        // if ($actual === 0 || $required === 0) {
+        //     return $this->getZeroRatings();
+        // }
+
+        // Calculate ratings based on provided formula
+        $readiness = ($actual / $required) * 100;
+       
+
+        return [
+            'actual' => $this->round($actual),
+            'required' => $this->round($required),
+            'readiness' => $this->round($readiness)
+        ];
+    }
 }

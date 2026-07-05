@@ -1,16 +1,21 @@
 <?php
 
 namespace App\Services;
+use App\Repositories\PnUnitRepository;
 
 use App\Repositories\TrainingItemRepository;
 
 class TrainingItemService
 {
     private $repository;
-
-    public function __construct(TrainingItemRepository $repository)
+    private $unitRepository;
+    public function __construct(
+        TrainingItemRepository $repository,
+        PnUnitRepository $unitRepository
+    )
     {
         $this->repository = $repository;
+        $this->unitRepository = $unitRepository;
     }
 
     public function getAllItems()
@@ -30,6 +35,12 @@ class TrainingItemService
 
     public function createItem(array $data)
     {
+        if (isset($data['unit_id'])) {
+            $category = $this->unitRepository->getCategoryByUnitId($data['unit_id']);
+            if ($category) {
+                $data['category_id'] = $category->id;
+            }
+        }
         $data['year'] = now()->year;
         $data['created_by'] = auth()->user()?->id;
         return $this->repository->create($data);
@@ -37,6 +48,12 @@ class TrainingItemService
 
     public function updateItem(int $id, array $data)
     {
+        if (isset($data['unit_id'])) {
+            $category = $this->unitRepository->getCategoryByUnitId($data['unit_id']);
+            if ($category) {
+                $data['category_id'] = $category->id;
+            }
+        }
         $data['updated_by'] = auth()->user()?->id;
         return $this->repository->update($id, $data);
     }

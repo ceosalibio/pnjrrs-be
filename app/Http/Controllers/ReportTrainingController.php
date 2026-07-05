@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\ReportPersonnelService;
+use App\Services\ReportTrainingService;
 use Illuminate\Http\Request;
 use App\Traits\APIResponse;
 
-class ReportPersonnelController extends Controller
+class ReportTrainingController extends Controller
 {
     use APIResponse;
 
-    public function __construct(private ReportPersonnelService $service)
+    public function __construct(private ReportTrainingService $service)
     {
     }
 
@@ -20,7 +20,7 @@ class ReportPersonnelController extends Controller
     public function index(Request $request)
     {
         try {
-            $perPage = $request->input('per_page', 15);
+            $perPage = $request->input('per_page');
             $filters = [];
 
             // Collect filter parameters
@@ -36,6 +36,9 @@ class ReportPersonnelController extends Controller
             if ($request->has('sub_office_id')) {
                 $filters['sub_office_id'] = $request->input('sub_office_id');
             }
+            if ($request->has('report_month')) {
+                $filters['report_month'] = $request->input('report_month');
+            }
 
             // If filters exist, use filtered query; otherwise get paginated list
             if (!empty($filters)) {
@@ -44,7 +47,7 @@ class ReportPersonnelController extends Controller
                 $reports = $this->service->getPaginatedReports($perPage);
             }
 
-            return $this->successResponse($reports, 'Reports retrieved successfully');
+            return $this->successResponse($reports, 'Training Reports retrieved successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), 500);
         }
@@ -66,7 +69,7 @@ class ReportPersonnelController extends Controller
             ]);
 
             $result = $this->service->createReportWithFallback($validated);
-            return $this->successResponse($result, 'Report created successfully', 201);
+            return $this->successResponse($result, 'Training Report created successfully', 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->errorResponse($e->errors(), 422);
         } catch (\Exception $e) {
@@ -82,9 +85,9 @@ class ReportPersonnelController extends Controller
         try {
             $report = $this->service->getReportById($id);
             if (!$report) {
-                return $this->errorResponse('Report not found', 404);
+                return $this->errorResponse('Training Report not found', 404);
             }
-            return $this->successResponse($report, 'Report retrieved successfully');
+            return $this->successResponse($report, 'Training Report retrieved successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), 500);
         }
@@ -96,34 +99,28 @@ class ReportPersonnelController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $validated = $request->validate([
-                'category_id' => 'sometimes|integer|exists:pn_categories,id',
-                'unit_id' => 'sometimes|integer|exists:pn_units,id',
-                'sub_unit_id' => 'sometimes|integer|exists:pn_sub_units,id',
-                'office_id' => 'nullable|integer|exists:pn_offices,id',
-                'sub_office_id' => 'nullable|integer|exists:pn_sub_offices,id',
-                'items' => 'nullable|array',
-                'assessment' => 'nullable|array',
-                // 'items.*.description' => 'nullable|string',
-                // 'items.*.grade' => 'nullable|string',
-                // 'items.*.afpos' => 'nullable|string',
-                // 'items.*.required' => 'nullable|string',
-                // 'items.*.office' => 'nullable|boolean',
-                // 'items.*.officeName' => 'nullable|string',
-                'grade_points' => 'nullable|numeric',
-                'afpos_points' => 'nullable|numeric',
-                'required' => 'nullable|numeric',
-                'actual' => 'nullable|numeric',
-                'report_month' => 'sometimes|string',
-                'status' => 'nullable|integer|in:0,1,2,3',
-                'is_final' => 'nullable|integer|in:0,1',
-            ]);
+            // $validated = $request->validate([
+            //     'category_id' => 'sometimes|integer|exists:pn_categories,id',
+            //     'unit_id' => 'sometimes|integer|exists:pn_units,id',
+            //     'sub_unit_id' => 'sometimes|integer|exists:pn_sub_units,id',
+            //     'office_id' => 'nullable|integer|exists:pn_offices,id',
+            //     'sub_office_id' => 'nullable|integer|exists:pn_sub_offices,id',
+            //     'items' => 'nullable|array',
+            //     'assessment' => 'nullable|array',
+            //     'grade_points' => 'nullable|numeric',
+            //     'afpos_points' => 'nullable|numeric',
+            //     'required' => 'nullable|numeric',
+            //     'actual' => 'nullable|numeric',
+            //     'report_month' => 'sometimes|string',
+            //     'status' => 'nullable|integer|in:0,1,2,3',
+            //     'is_final' => 'nullable|integer|in:0,1',
+            // ]);
          
-            $report = $this->service->updateReport($id, $validated);
+            $report = $this->service->updateReport($id, $request->all());
             if (!$report) {
-                return $this->errorResponse('Report not found', 404);
+                return $this->errorResponse('Training Report not found', 404);
             }
-            return $this->successResponse($report, 'Report updated successfully');
+            return $this->successResponse($report, 'Training Report updated successfully');
         } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->errorResponse($e->errors(), 422);
         } catch (\Exception $e) {
@@ -178,9 +175,9 @@ class ReportPersonnelController extends Controller
         try {
             $deleted = $this->service->deleteReport($id);
             if (!$deleted) {
-                return $this->errorResponse('Report not found', 404);
+                return $this->errorResponse('Training Report not found', 404);
             }
-            return $this->successResponse(null, 'Report deleted successfully');
+            return $this->successResponse(null, 'Training Report deleted successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), 500);
         }

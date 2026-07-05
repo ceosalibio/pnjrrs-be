@@ -20,11 +20,13 @@ return new class extends Migration
             $table->unsignedBigInteger('sub_office_id')->nullable()->index();
             $table->json('items')->nullable()->comment('JSON field to store related items');
             $table->json('activity')->nullable()->comment('JSON field to store related items');
-            $table->json('result')->nullable()->comment('JSON field to store related results');            
+            $table->json('result')->nullable()->comment('JSON field to store related results');     
+            $table->json('assessment')->nullable()->comment('JSON field to store related results');    
             $table->decimal('required', 10, 2)->default(0);
             $table->decimal('actual', 10, 2)->default(0);
             $table->string('report_month', 7)->index();
             $table->integer('status')->default(0)->index()->comment('0: Draft, 1: Submitted, 2: Approved, 3: Rejected');
+            $table->unsignedTinyInteger('is_final')->default(0)->index()->comment('0: Not Final, 1: Final');
             $table->unsignedBigInteger('created_by')->nullable();
             $table->unsignedBigInteger('updated_by')->nullable();
             $table->timestamps();

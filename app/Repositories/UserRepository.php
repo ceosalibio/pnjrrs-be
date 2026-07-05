@@ -234,9 +234,11 @@ class UserRepository
         return ItemRank::with(['division','grade'])->get();
     }
 
-
+// approver model
     public function filterByMultiple(array $filters)
     {
+        // Log the incoming filters
+        
         $query = User::with([
             'category',
             'unit',
@@ -244,8 +246,6 @@ class UserRepository
             'office',
             'subOffice',
             'rank',
-            'approvers',
-            'approvers.user',
         ]);
 
         if (isset($filters['category_id'])) {
@@ -268,14 +268,35 @@ class UserRepository
             $query->where('sub_office_id', $filters['sub_office_id']);
         }
 
-        // Filter by approver - only if both report_id and report_type are provided
+        // Load approvers with conditional filtering
         if (isset($filters['report_id']) && isset($filters['report_type'])) {
-            $query->whereHas('approvers', function ($q) use ($filters) {
-                $q->where('report_id', $filters['report_id'])
-                    ->where('report_type', $filters['report_type']);
-            });
+            // Load only approvers matching the report_id and report_type
+            $query->with([
+                'approvers' => function ($q) use ($filters) {
+                    $q->where('report_id', $filters['report_id'])
+                        ->where('report_type', $filters['report_type']);
+                },
+                'approvers.user'
+            ]);
+        } else {
+            
+            // Load all approvers
+            $query->with([
+                'approvers',
+                'approvers.user'
+            ]);
         }
-
-        return $query->get();
+        
+        $query->orderBy('approver');
+        
+        $results = $query->get();
+        \Log::info('UserRepository filterByMultiple - Query results count:', [
+            'count' => $results->count(),
+            'filters' => $filters
+        ]);
+        
+        return $results;
     }
 }
+
+ 

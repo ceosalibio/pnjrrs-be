@@ -25,6 +25,7 @@ class ReportPersonnel extends Model
         'actual',
         'report_month',
         'status',
+        'is_final',
         'created_by',
         'updated_by',
     ];

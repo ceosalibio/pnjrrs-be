@@ -80,7 +80,7 @@ class TrainingItemController extends Controller
     {
         try {
             $validated = $request->validate([
-                'category_id' => 'required|integer|exists:pn_categories,id',
+                // 'category_id' => 'required|integer|exists:pn_categories,id',
                 'unit_id' => 'required|integer|exists:pn_units,id',
                 'sub_unit_id' => 'nullable|integer|exists:pn_sub_units,id',
                 'office_id' => 'nullable|integer|exists:pn_offices,id',
@@ -120,17 +120,9 @@ class TrainingItemController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $validated = $request->validate([
-                'category_id' => 'sometimes|integer|exists:pn_categories,id',
-                'unit_id' => 'sometimes|integer|exists:pn_units,id',
-                'sub_unit_id' => 'nullable|integer|exists:pn_sub_units,id',
-                'office_id' => 'nullable|integer|exists:pn_offices,id',
-                'sub_office_id' => 'nullable|integer|exists:pn_sub_offices,id',
-                'items' => 'nullable|array',
-                'year' => 'nullable|integer|digits:4',
-            ]);
+            
 
-            $updated = $this->service->updateItem($id, $validated);
+            $updated = $this->service->updateItem($id, $request->all());
             if (!$updated) {
                 return $this->errorResponse('Training item not found', 404);
             }

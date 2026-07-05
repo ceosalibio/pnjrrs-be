@@ -1,13 +1,19 @@
 <?php
 namespace App\Services;
 use App\Repositories\UserRepository;
+use App\Repositories\ApproverRepository;
 
 class ApproverService 
 {
     public $userRepository;
-    public function __construct(UserRepository  $userRepository)
+    public $approverRepository;
+    public function __construct(
+        UserRepository  $userRepository,
+        ApproverRepository  $approverRepository
+        )
     {
         $this->userRepository = $userRepository;
+        $this->approverRepository = $approverRepository;
     }
 
     public function fetchApprover($filters)
@@ -55,6 +61,24 @@ class ApproverService
         }
 
         return $this->fetchApprover($approverFilters);
+    }
+
+    public function createApprover($data, $type)
+    {
+        try {
+            $payload = [
+                "report_id" => $data->id,
+                "report_type" => $type,
+                "user_id" => auth()->user()?->id,
+            ];
+            $this->approverRepository->create($payload);
+        } catch (\Exception $e) {
+            \Log::error('ApproverService createApprover - Error creating approver:', [
+                'error' => $e->getMessage(),
+                'report_id' => $data->id ?? null,
+                'report_type' => $type,
+            ]);
+        }
     }
    
 }

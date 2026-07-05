@@ -60,9 +60,13 @@ class ReportPersonnelService
         // Fetch approver for the report
         $approver = $this->approverService->getApproverForReport($result,'personnel');
         
+        // Count approvers (handle both array and Collection)
+        $approverCount = is_array($approver) ? count($approver) : $approver->count();
+        
         return [
             'report' => $result,
             'approver' => $approver,
+            'final_approver' => $approverCount - 1,
         ];
     }
 
@@ -92,10 +96,12 @@ class ReportPersonnelService
             
             if ($currentMonthReports && $currentMonthReports->count() > 0) {
                 $currentReport = $currentMonthReports->first();
-                $approver = $this->approverService->getApproverForReport($currentReport);
+                $approver = $this->approverService->getApproverForReport($currentReport,'personnel');
+                $approverCount = is_array($approver) ? count($approver) : $approver->count();
                 return [
                     'report' => $currentReport,
                     'approver' => $approver,
+                    'final_approver' => $approverCount - 1,
                 ];
             }
         }
@@ -216,7 +222,8 @@ class ReportPersonnelService
         // Refresh and create/update serial record after report update
         $updatedReport = $this->repository->findById($id);
         $this->createSerialForReport($updatedReport);
-        
+        // create data in approver table
+        $this->approverService->createApprover($updatedReport, 'personnel');
         return $updatedReport;
     }
 
