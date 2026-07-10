@@ -1,0 +1,168 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Services\ReportEquipmentService;
+use Illuminate\Http\Request;
+use App\Traits\APIResponse;
+
+class ReportEquipmentController extends Controller
+{
+    use APIResponse;
+
+    public function __construct(private ReportEquipmentService $service)
+    {
+    }
+
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request)
+    {
+        try {
+            $perPage = $request->input('per_page');
+            $filters = [];
+
+            // Collect filter parameters
+            if ($request->has('unit_id')) {
+                $filters['unit_id'] = $request->input('unit_id');
+            }
+            if ($request->has('sub_unit_id')) {
+                $filters['sub_unit_id'] = $request->input('sub_unit_id');
+            }
+            if ($request->has('office_id')) {
+                $filters['office_id'] = $request->input('office_id');
+            }
+            if ($request->has('sub_office_id')) {
+                $filters['sub_office_id'] = $request->input('sub_office_id');
+            }
+            if ($request->has('report_month')) {
+                $filters['report_month'] = $request->input('report_month');
+            }
+
+            // If filters exist, use filtered query; otherwise get paginated list
+            if (!empty($filters)) {
+                $reports = $this->service->getReportsByFilters($filters, $perPage);
+            } else {
+                $reports = $this->service->getPaginatedReports($perPage);
+            }
+
+            return $this->successResponse($reports, 'Equipment Reports retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'category_id' => 'nullable|integer',
+                'unit_id' => 'required|integer|exists:pn_units,id',
+                'sub_unit_id' => 'nullable|integer|exists:pn_sub_units,id',
+                'office_id' => 'nullable|integer|exists:pn_offices,id',
+                'sub_office_id' => 'nullable|integer|exists:pn_sub_offices,id',
+                'report_month' => 'required|string',
+            ]);
+
+            $result = $this->service->createReportWithFallback($validated);
+            return $this->successResponse($result, 'Equipment Report created successfully', 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $this->errorResponse($e->errors(), 422);
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show($id)
+    {
+        try {
+            $report = $this->service->getReportById($id);
+            if (!$report) {
+                return $this->errorResponse('Equipment Report not found', 404);
+            }
+            return $this->successResponse($report, 'Equipment Report retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, $id)
+    {
+        try {
+            $report = $this->service->updateReport($id, $request->all());
+            if (!$report) {
+                return $this->errorResponse('Equipment Report not found', 404);
+            }
+            return $this->successResponse($report, 'Equipment Report updated successfully');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $this->errorResponse($e->errors(), 422);
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Get organization items grouped by office/sub-office
+     * Query params: unit_id, sub_unit_id, office_id, sub_office_id
+     */
+    public function getItemsGroupedByOffice(Request $request)
+    {
+        try {
+            $filters = [];
+
+            // Collect filter parameters
+            if ($request->has('unit_id')) {
+                $filters['unit_id'] = $request->input('unit_id');
+            }
+            if ($request->has('sub_unit_id')) {
+                $filters['sub_unit_id'] = $request->input('sub_unit_id');
+            }
+            if ($request->has('office_id')) {
+                $filters['office_id'] = $request->input('office_id');
+            }
+            if ($request->has('sub_office_id')) {
+                $filters['sub_office_id'] = $request->input('sub_office_id');
+            }
+
+            if (empty($filters)) {
+                return $this->errorResponse('At least one filter parameter is required (unit_id, sub_unit_id, office_id, or sub_office_id)', 400);
+            }
+
+            $groupedData = $this->service->getOrganizationGroupedItems($filters);
+
+            if (!$groupedData) {
+                return $this->errorResponse('No organization data found for the given filters', 404);
+            }
+
+            return $this->successResponse($groupedData['grouped_items'], 'Items grouped by office retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy($id)
+    {
+        try {
+            $deleted = $this->service->deleteReport($id);
+            if (!$deleted) {
+                return $this->errorResponse('Equipment Report not found', 404);
+            }
+            return $this->successResponse(null, 'Equipment Report deleted successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), 500);
+        }
+    }
+}

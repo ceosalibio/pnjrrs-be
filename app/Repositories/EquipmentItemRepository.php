@@ -77,7 +77,7 @@ class EquipmentItemRepository
         ])->paginate($perPage);
     }
 
-    public function filterByMultiple(array $filters, int $perPage = 15)
+    public function filterByMultiple(array $filters, int $perPage = null, $first = false)
     {
         $query = EquipmentItem::with([
             'category',
@@ -110,8 +110,13 @@ class EquipmentItemRepository
         if (isset($filters['year'])) {
             $query->where('year', $filters['year']);
         }
-
-        return $query->paginate($perPage);
+        if($perPage){
+            return $query->paginate($perPage);
+        }
+        if($first){
+            return $query->first();
+        }
+        return $query->get();
     }
 
     public function filterByMultipleAll(array $filters)

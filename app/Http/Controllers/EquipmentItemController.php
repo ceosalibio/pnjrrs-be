@@ -80,7 +80,7 @@ class EquipmentItemController extends Controller
     {
         try {
             $validated = $request->validate([
-                'category_id' => 'required|integer|exists:pn_categories,id',
+                // 'category_id' => 'required|integer|exists:pn_categories,id',
                 'unit_id' => 'required|integer|exists:pn_units,id',
                 'sub_unit_id' => 'nullable|integer|exists:pn_sub_units,id',
                 'office_id' => 'nullable|integer|exists:pn_offices,id',
@@ -121,7 +121,7 @@ class EquipmentItemController extends Controller
     {
         try {
             $validated = $request->validate([
-                'category_id' => 'sometimes|integer|exists:pn_categories,id',
+                // 'category_id' => 'sometimes|integer|exists:pn_categories,id',
                 'unit_id' => 'sometimes|integer|exists:pn_units,id',
                 'sub_unit_id' => 'nullable|integer|exists:pn_sub_units,id',
                 'office_id' => 'nullable|integer|exists:pn_offices,id',

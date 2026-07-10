@@ -95,6 +95,7 @@ class ReportTrainingService
                 $currentReport = $currentMonthReports->first();
                 $approver = $this->approverService->getApproverForReport($currentReport, 'training');
                 $approverCount = is_array($approver) ? count($approver) : $approver->count();
+                
                 return [
                     'report' => $currentReport,
                     'approver' => $approver,
@@ -220,24 +221,42 @@ class ReportTrainingService
             }
         }
 
-        // Validate serial numbers in items are unique within the report month
-        if (isset($data['items']) && is_array($data['items'])) {
-            foreach ($data['items'] as $key => $value) {
-                if(!empty($value["datePerformed"]) && empty($value["status"])){
-                    $data['items'][$key]["status"] = true;
-                    $data['items'][$key]["status_date"] = now();
+        // Use provided items or fall back to existing report items
+        $items = isset($data['items']) ? $data['items'] : $report->items;
+
+        // Auto-mark items as complete only if new items are being provided
+        if (!empty($data["status"])) {
+            foreach ($items as $key => $value) {
+                // Auto-mark item as complete if report is approved and item has actual value but no status or status is false
+                if (!empty($items[$key]["actual"]) && (!isset($items[$key]["status"]) || $items[$key]["status"] === false)) {
+                    \Log::info('Auto-marking training item as complete', [
+                        'report_id' => $id,
+                        'item_key' => $key,
+                        'report_status' => $data["status"],
+                        'item_actual' => $items[$key]["actual"],
+                        'item_status_before' => $items[$key]["status"] ?? 'not set',
+                    ]);
+                    $items[$key]["status"] = true;
+                    $items[$key]["status_date"] = now();
                 }
             }
-            // Calculate sum of 'actual' based on quarter if items exist and month is available
-            if ($month) {
-                $quarter = $this->getQuarterFromMonth($month);
-                $actualSum = $this->sumActualByQuarter($data['items'], $quarter);
-                $data['actual'] = $actualSum;
-            }
+            // return;
+
+            // Kung ginagamit pa ang $data['items'] sa ibang parte ng code pagkatapos nito,
+            // i-sync natin para consistent
+            $data['items'] = $items;
+        }
+
+        // Calculate sum of 'actual' based on quarter if items exist and month is available
+        if ($month && $items) {
+            $quarter = $this->getQuarterFromMonth($month);
+            $actualSum = $this->sumActualByQuarter($items, $quarter);
+            $data['actual'] = $actualSum;
         }
 
         $data['updated_by'] = auth()->user()?->id;
-        $data['result'] = $this->resultCalculationService->calculateTrainingResults($data['actual'] ?? 0, $report->required ?? 0);
+        $requiredValue = $data['required'] ?? $report->required ?? 0;
+        $data['result'] = $this->resultCalculationService->calculateTrainingResults($data['actual'] ?? 0, $requiredValue);
         $this->repository->update($id, $data);
         
         // Refresh and create/update serial record after report update
