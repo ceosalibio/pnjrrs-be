@@ -25,6 +25,10 @@ return new class extends Migration
             $table->decimal('required', 10, 2)->default(0);
             $table->decimal('actual', 10, 2)->default(0);
             $table->string('report_month', 7)->index();
+            $table->decimal('rating_equipment', 10, 2)->default(0);
+            $table->decimal('rating_maintenance', 10, 2)->default(0);
+            $table->string('redcon_equipment')->nullable();
+            $table->string('redcon_maintenance')->nullable();
             $table->integer('status')->default(0)->index()->comment('0: Draft, 1: Submitted, 2: Approved, 3: Rejected');
             $table->unsignedTinyInteger('is_final')->default(0)->index()->comment('0: Not Final, 1: Final');
             $table->unsignedBigInteger('created_by')->nullable();

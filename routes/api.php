@@ -15,6 +15,7 @@ use App\Http\Controllers\SettingOrganizationController;
 use App\Http\Controllers\ReportPersonnelController;
 use App\Http\Controllers\ReportTrainingController;
 use App\Http\Controllers\ReportEquipmentController;
+use App\Http\Controllers\ReportFacilityController;
 use App\Http\Controllers\TrainingItemController;
 use App\Http\Controllers\EquipmentItemController;
 
@@ -72,6 +73,8 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
         Route::apiResource('trainings', ReportTrainingController::class);
         Route::get('equipments/grouped-by-office', [ReportEquipmentController::class, 'getItemsGroupedByOffice']);
         Route::apiResource('equipments', ReportEquipmentController::class);
+        Route::get('facilities/grouped-by-office', [ReportFacilityController::class, 'getItemsGroupedByOffice']);
+        Route::apiResource('facilities', ReportFacilityController::class);
     });
     // route for settings
     Route::prefix('settings')->group(function () {

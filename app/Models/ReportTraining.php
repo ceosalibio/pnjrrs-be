@@ -23,6 +23,8 @@ class ReportTraining extends Model
         'required',
         'actual',
         'report_month',
+        'rating',
+        'redcon',  
         'status',
         'is_final',
         'created_by',

@@ -351,6 +351,80 @@ class ResultCalculationService
         ];
     }
 
+    // facilities redcon status
+    public function calculateFacilities(array $items, $unit_id): array
+    {
+        // Define weights based on unit_id
+        $weights = [];
+        if ($unit_id == 5) {
+            $weights = [
+                'Operational Facilities' => 0.50,
+                'Operational Support Facilities' => 0.30,
+                'Base Facilities' => 0.10,
+                'Community Facilities' => 0.10,
+            ];
+        } else {
+            $weights = [
+                'Operational Facilities' => 0.60,
+                'Operational Support Facilities' => 0.40,
+            ];
+        }
+
+        $categories = [];
+        $totalWeightedScore = 0;
+        $totalQualitative = 0;
+        $totalQuantitative = 0;
+        $totalAverage = 0;
+
+        foreach ($items as $item) {
+            $category = $item['category'];
+            
+            // Calculate average percentage: (qualitative_percentage + quantitative_percentage) / 2
+            $qualitative = floatval($item['qualitative_percentage'] ?? 0);
+            $quantitative = floatval($item['quantitative_percentage'] ?? 0);
+            $averagePercentage = ($qualitative + $quantitative) / 2;
+            
+            // Get weight for this category
+            $weight = $weights[$category] ?? 0;
+            
+            // Calculate weighted score
+            $weightedScore = $averagePercentage * $weight;
+            
+            $categories[] = [
+                'category' => $category,
+                'required_area' => $item['required_area_sqm'] ?? 0,
+                'actual_area' => $item['actual_area_sqm'] ?? 0,
+                'qualitative_percentage' => $qualitative,
+                'quantitative_percentage' => $quantitative,
+                'average_percentage' => round($averagePercentage, 2),
+                'weight_percentage' => $weight * 100,
+                'weighted_score' => round($weightedScore, 2),
+            ];
+            
+            $totalWeightedScore += $weightedScore;
+            $totalQualitative += $qualitative;
+            $totalQuantitative += $quantitative;
+            $totalAverage += $averagePercentage;
+        }
+
+        $overallReadiness = round($totalWeightedScore, 2);
+        
+        // Calculate average percentages
+        $itemCount = count($items);
+        $avgQualitative = $itemCount > 0 ? round($totalQualitative / $itemCount, 2) : 0;
+        $avgQuantitative = $itemCount > 0 ? round($totalQuantitative / $itemCount, 2) : 0;
+        $avgAverage = $itemCount > 0 ? round($totalAverage / $itemCount, 2) : 0;
+
+        return [
+            'categories' => $categories,
+            'overall_readiness' => $overallReadiness,
+            'average_qualitative_percentage' => $avgQualitative,
+            'average_quantitative_percentage' => $avgQuantitative,
+            'average_percentage' => $avgAverage,
+            'redcon' => $this->getRedconStatus($overallReadiness),
+        ];
+    }
+
 
 
 

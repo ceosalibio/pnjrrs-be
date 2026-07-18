@@ -256,7 +256,10 @@ class ReportTrainingService
 
         $data['updated_by'] = auth()->user()?->id;
         $requiredValue = $data['required'] ?? $report->required ?? 0;
-        $data['result'] = $this->resultCalculationService->calculateTrainingResults($data['actual'] ?? 0, $requiredValue);
+        $result = $this->resultCalculationService->calculateTrainingResults($data['actual'] ?? 0, $requiredValue);
+        $data['result'] = $result;
+        $data['rating'] = $result['readiness'] ?? 0;
+        $data['redcon'] = $result['redcon'] ?? '';
         $this->repository->update($id, $data);
         
         // Refresh and create/update serial record after report update

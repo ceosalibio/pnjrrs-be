@@ -52,13 +52,27 @@ class ReportPersonnelService
         }
 
         $data['created_by'] = auth()->user()?->id;
+        
+        \Log::info('ReportPersonnelService::createReport - Creating report', [
+            'unit_id' => $data['unit_id'] ?? null,
+            'report_month' => $data['report_month'] ?? null,
+        ]);
+        
         $result = $this->repository->create($data);
+        
+        \Log::info('ReportPersonnelService::createReport - Report created', [
+            'report_id' => $result->id ?? null,
+        ]);
         
         // Create serial record after report creation
         $this->createSerialForReport($result);
         
         // Fetch approver for the report
         $approver = $this->approverService->getApproverForReport($result,'personnel');
+        
+        \Log::info('ReportPersonnelService::createReport - Approver fetched', [
+            'approver_count' => is_array($approver) ? count($approver) : $approver->count(),
+        ]);
         
         // Count approvers (handle both array and Collection)
         $approverCount = is_array($approver) ? count($approver) : $approver->count();
@@ -210,13 +224,18 @@ class ReportPersonnelService
         $actual = $data['actual'] ?? $report->actual ?? 0;
         $required = $data['required'] ?? $report->required ?? 0;
         
-        $data['result'] = $this->resultCalculationService->calculatePersonnelResults(
+      
+        
+        $result = $this->resultCalculationService->calculatePersonnelResults(
             $gradePoints,
             $afposPoints,
             $actual,
             $required
         );
-  
+        
+        $data['result'] = $result;
+        $data['rating'] = $result['readiness'] ?? 0;
+        $data['redcon'] = $result['redcon'] ?? '';
         $this->repository->update($id, $data);
         
         // Refresh and create/update serial record after report update
@@ -224,6 +243,7 @@ class ReportPersonnelService
         $this->createSerialForReport($updatedReport);
         // create data in approver table
         $this->approverService->createApprover($updatedReport, 'personnel');
+          
         return $updatedReport;
     }
 

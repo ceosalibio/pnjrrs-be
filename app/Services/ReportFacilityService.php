@@ -2,35 +2,33 @@
 
 namespace App\Services;
 
-use App\Repositories\ReportEquipmentRepository;
-use App\Repositories\EquipmentItemRepository;
+use App\Builders\FacilityInspectionReportBuilder;
+use App\Repositories\ReportFacilityRepository;
 use App\Services\SettingOrganizationService;
 use App\Services\ResultCalculationService;
-use App\Services\PnSerialService;
 use App\Services\ApproverService;
+use App\Repositories\PnUnitRepository;
 
-class ReportEquipmentService
+class ReportFacilityService
 {
     private $repository;
     private $organizationService;
     private $resultCalculationService;
     private $approverService;
-    private $equipmentItemRepository;
+    private $unitRepository;
 
     public function __construct(
-        ReportEquipmentRepository $repository,
+        ReportFacilityRepository $repository,
         SettingOrganizationService $organizationService,
         ResultCalculationService $resultCalculationService,
-        PnSerialService $pnSerialService,
         ApproverService $approverService,
-        EquipmentItemRepository $equipmentItemRepository,
+        PnUnitRepository $unitRepository
     ) {
         $this->repository = $repository;
         $this->organizationService = $organizationService;
         $this->resultCalculationService = $resultCalculationService;
-        $this->pnSerialService = $pnSerialService;
         $this->approverService = $approverService;
-        $this->equipmentItemRepository = $equipmentItemRepository;
+        $this->unitRepository = $unitRepository;
     }
 
     public function getAllReports()
@@ -54,7 +52,7 @@ class ReportEquipmentService
         $result = $this->repository->create($data);
         
         // Fetch approver for the report
-        $approver = $this->approverService->getApproverForReport($result, 'equipment');
+        $approver = $this->approverService->getApproverForReport($result, 'facility');
         
         // Count approvers (handle both array and Collection)
         $approverCount = is_array($approver) ? count($approver) : $approver->count();
@@ -92,7 +90,7 @@ class ReportEquipmentService
             
             if ($currentMonthReports && $currentMonthReports->count() > 0) {
                 $currentReport = $currentMonthReports->first();
-                $approver = $this->approverService->getApproverForReport($currentReport, 'equipment');
+                $approver = $this->approverService->getApproverForReport($currentReport, 'facility');
                 $approverCount = is_array($approver) ? count($approver) : $approver->count();
                 return [
                     'report' => $currentReport,
@@ -106,7 +104,7 @@ class ReportEquipmentService
         if ($requestMonth) {
             $previousMonth = $this->getPreviousMonth($requestMonth);
             
-            \Log::info('Equipment Report Fallback Debug', [
+            \Log::info('Facility Report Fallback Debug', [
                 'requestMonth' => $requestMonth,
                 'previousMonth' => $previousMonth,
             ]);
@@ -114,21 +112,21 @@ class ReportEquipmentService
             if ($previousMonth) {
                 $previousMonthFilters = array_merge($unitFilters, ['report_month' => $previousMonth]);
                 
-                \Log::info('Searching for previous equipment month', [
+                \Log::info('Searching for previous facility month', [
                     'previousMonth' => $previousMonth,
                     'filters' => $previousMonthFilters,
                 ]);
                 
                 $previousMonthReports = $this->getReportsByFilters($previousMonthFilters, 1);
                 
-                \Log::info('Previous equipment month search result', [
+                \Log::info('Previous facility month search result', [
                     'found' => $previousMonthReports ? $previousMonthReports->count() : 0,
                 ]);
                 
                 if ($previousMonthReports && $previousMonthReports->count() > 0) {
                     $previousReport = $previousMonthReports->first();
                     
-                    \Log::info('Copying equipment data from previous month', [
+                    \Log::info('Copying facility data from previous month', [
                         'from_month' => $previousReport->report_month,
                         'to_month' => $requestMonth,
                     ]);
@@ -141,7 +139,7 @@ class ReportEquipmentService
                     
                     $result = $this->repository->create($data);
                     
-                    $approver = $this->approverService->getApproverForReport($result, 'equipment');
+                    $approver = $this->approverService->getApproverForReport($result, 'facility');
                     $approverCount = is_array($approver) ? count($approver) : $approver->count();
                     
                     return [
@@ -154,13 +152,16 @@ class ReportEquipmentService
         }
 
         // STEP 3: If no previous month, create empty report
-        $equipmentData = $this->equipmentItemRepository->filterByMultiple($unitFilters, null, true);
-        $data["category_id"] = $equipmentData->category_id;
-        $data["items"] = $equipmentData->items;
+        if (isset($data['unit_id'])) {
+            $category = $this->unitRepository->getCategoryByUnitId($data['unit_id']);
+            if ($category) {
+                $data['category_id'] = $category->id;
+            }
+        }
         $data['created_by'] = auth()->user()?->id;
+        $data["items"] = FacilityInspectionReportBuilder::buildFacilitiesItems($data['unit_id']);
         $result = $this->repository->create($data);
-        
-        $approver = $this->approverService->getApproverForReport($result, 'equipment');
+        $approver = $this->approverService->getApproverForReport($result, 'facility');
         $approverCount = is_array($approver) ? count($approver) : $approver->count();
         
         return [
@@ -175,15 +176,10 @@ class ReportEquipmentService
         // Calculate summary from items if items are provided
         if (isset($data['items'])) {
             $find = $this->repository->findById($id);
-            $sum = $this->calculateItemsSummary($data['items']);
-            $data["required"] = $sum["total_required"];
-            $data["actual"] = $sum["total_onhand"];
-            $response = $this->resultCalculationService->calculateEquipmentResults($data['items'], $find->category_id);
+            $response = $this->resultCalculationService->calculateFacilities($data['items'], $find->unit_id);
             $data["result"] = $response;
-            $data["rating_equipment"] = $response["equipment"]["total_score"] ?? 0;
-            $data["rating_maintenance"] = $response["maintenance"]["total_score"] ?? 0;
-            $data["redcon_equipment"] = $response["equipment"]["redcon"] ?? '';
-            $data["redcon_maintenance"] = $response["maintenance"]["redcon"] ?? '';
+            $data["rating"] = $response["overall_readiness"] ?? 0;
+            $data["redcon"] = $response["redcon"] ?? '';
         }
         $data['updated_by'] = auth()->user()?->id;
         $result = $this->repository->update($id, $data);
@@ -227,11 +223,10 @@ class ReportEquipmentService
         return str_pad($previousMonth, 2, '0', STR_PAD_LEFT) . '/' . $previousYear;
     }
 
-
     public function calculateItemsSummary(array $items): array
     {
         $totalRequired = 0;
-        $totalOnhand = 0;
+        $totalActual = 0;
 
         foreach ($items as $category) {
             if (!isset($category['divisions'])) {
@@ -254,9 +249,9 @@ class ReportEquipmentService
                             $totalRequired += (int)$item['required'];
                         }
 
-                        // Sum onhand field if it exists
-                        if (isset($item['onhand'])) {
-                            $totalOnhand += (int)$item['onhand'];
+                        // Sum actual field if it exists
+                        if (isset($item['actual'])) {
+                            $totalActual += (int)$item['actual'];
                         }
                     }
                 }
@@ -265,8 +260,8 @@ class ReportEquipmentService
 
         return [
             'total_required' => $totalRequired,
-            'total_onhand' => $totalOnhand,
-            'shortage' => $totalRequired - $totalOnhand, // Useful metric
+            'total_actual' => $totalActual,
+            'shortage' => $totalRequired - $totalActual,
         ];
     }
 
@@ -289,7 +284,7 @@ class ReportEquipmentService
                         'division_id' => $divisionId,
                         'division_name' => $divisionName,
                         'total_required' => 0,
-                        'total_onhand' => 0,
+                        'total_actual' => 0,
                     ];
                 }
 
@@ -308,9 +303,9 @@ class ReportEquipmentService
                             $divisionsData[$divisionId]['total_required'] += (int)$item['required'];
                         }
 
-                        // Sum onhand field if it exists
-                        if (isset($item['onhand'])) {
-                            $divisionsData[$divisionId]['total_onhand'] += (int)$item['onhand'];
+                        // Sum actual field if it exists
+                        if (isset($item['actual'])) {
+                            $divisionsData[$divisionId]['total_actual'] += (int)$item['actual'];
                         }
                     }
                 }
@@ -319,11 +314,11 @@ class ReportEquipmentService
 
         // Calculate shortage and percentage/rating for each division
         foreach ($divisionsData as &$division) {
-            $division['shortage'] = $division['total_required'] - $division['total_onhand'];
+            $division['shortage'] = $division['total_required'] - $division['total_actual'];
             
-            // Calculate completion percentage (onhand / required * 100)
+            // Calculate completion percentage (actual / required * 100)
             if ($division['total_required'] > 0) {
-                $division['completion_percentage'] = round(($division['total_onhand'] / $division['total_required']) * 100, 2);
+                $division['completion_percentage'] = round(($division['total_actual'] / $division['total_required']) * 100, 2);
             } else {
                 $division['completion_percentage'] = 0;
             }
